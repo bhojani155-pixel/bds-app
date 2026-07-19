@@ -1,0 +1,246 @@
+ <!DOCTYPE html>
+<html lang="hi">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bhojani Digital Seva Status</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.3/simple-lightbox.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.3/simple-lightbox.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Apply Google Font Outfit to the entire page */
+        
+        body {
+            font-family: 'Outfit', sans-serif !important;
+        }
+
+        /* 1. मुख्य मेनू बार - प्रीमियम ग्लास लुक */
+        .main-navbar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: rgba(26, 26, 26, 0.95) !important;
+            backdrop-filter: blur(10px);
+            padding: 12px 8px !important;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+        .nav-tab {
+            background: transparent !important;
+            border: none !important;
+            color: #a0a0a0 !important;
+            padding: 10px 20px !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            border-radius: 25px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+        /* एक्टिव होने पर चमकदार ग्रेडिएंट और शैडो */
+        .nav-tab.active {
+            background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc) !important;
+            color: white !important;
+            box-shadow: 0 6px 15px rgba(67, 100, 247, 0.4) !important;
+            transform: translateY(-1px);
+        }
+
+        /* 2. कैटेगरी चिप्स - स्मूथ मोबाइल स्क्रॉलिंग */
+        .category-chips {
+            display: flex;
+            gap: 10px;
+            padding: 14px 12px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .category-chips::-webkit-scrollbar {
+            display: none;
+        }
+        .chip.btn-category {
+            background-color: #262626 !important;
+            color: #e0e0e0 !important;
+            border: 1px solid #333 !important;
+            padding: 8px 18px !important;
+            border-radius: 20px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            white-space: nowrap;
+            transition: all 0.2s ease !important;
+            cursor: pointer;
+        }
+        .chip.btn-category.active {
+            background: #0084ff !important;
+            color: white !important;
+            border-color: #0044ff !important;
+            box-shadow: 0 4px 10px rgba(0, 132, 255, 0.3) !important;
+        }
+        /* 3. इमेज ग्रिड और कार्ड्स */
+        #autoGallery {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 14px !important;
+            padding: 14px !important;
+        }
+        #autoGallery a {
+            display: block !important;
+            background-color: #1a1a1a !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            aspect-ratio: 3 / 4 !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #autoGallery a:active {
+            transform: scale(0.97);
+        }
+        #autoGallery img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+        }
+
+        /* --- 4. वॉटरमार्क और लाइक बटन बेस --- */
+        .gallery-item-wrapper, .video-item-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+        .reels-container-fullscreen .bds-watermark {
+            position: absolute !important;
+            bottom: 95px !important;
+            left: 20px !important;
+            right: auto !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            z-index: 10002 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 2px !important;
+            pointer-events: none !important;
+        }
+
+        .grid-video-item .bds-watermark, .gallery-item .bds-watermark {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 123, 255, 0.8);
+            color: white;
+            font-size: 11px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            z-index: 5;
+        }
+
+        .fullscreen-like-btn {
+            background: rgba(0, 0, 0, 0.7) !important;
+            color: white !important;
+            transition: transform 0.2s ease !important;
+        }
+        .fullscreen-like-btn.liked {
+            color: #ff2b55 !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-color: #ff2b55 !important;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="brand-header" style="display: flex; align-items: center; padding: 10px; background: var(--header-bg); border-bottom: 2px solid #eee;">
+    <div class="brand-logo" style="background: #007bff; color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-right: 15px;">BDS</div>
+    
+    <div class="brand-title" style="flex-grow: 1;">
+        <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; color:#65a3e6; 
+         font-weight: 800;">BHOJANI DAILY STATUS</h2>
+        <small style="font-size: 12px; color: #666; letter-spacing: 1px;
+        ">BY BHOJANI DIGITAL SEVA</small>
+    </div>
+      <div class="user-profile" onclick="openProfile()">
+    <span id="user-initial"></span> 
+</div>
+        <div class="header-center">
+            <div class="lang-toggle-container">
+                <button id="btnLangHindi" class="lang-toggle-btn active" onclick="toggleLanguage('hindi')">🇮🇳 हिंदी</button>
+                <button id="btnLangGujarati" class="lang-toggle-btn" onclick="toggleLanguage('gujarati')">📿 ગુજરાતી</button>
+            </div>
+        </div>
+        
+        <button id="darkModeBtn" class="btn-dark-toggle">🌙</button>
+        <button id="appShareBtn" class="top-action-btn" style="padding: 6px 12px; font-size: 14px; 
+        background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; 
+        font-weight: bold; margin-left: 9px;">
+            🔗 ऐप शेयर
+        </button>
+    </div>
+
+    <div class="main-navbar">
+        <button id="tabText" class="nav-tab">📝 टेक्स्ट</button>
+        <button id="tabPhotos" class="nav-tab">📸 फोटो</button>
+        <button id="tabVideos" class="nav-tab active">🎥 रील्स</button>
+    </div>
+
+    <div id="textSection" class="app-section hidden">
+        <div class="category-chips">
+            <button id="btnFavoritesText" class="chip btn-category" data-cat="favorites" style="background: #ff2b55; color: white; font-weight: bold;">❤️ पसंदीदा</button>
+            <button id="btnLoveText" class="chip btn-category active" data-cat="love">❤️ Love</button>
+            <button id="btnSadText" class="chip btn-category" data-cat="sad">💔 Sad</button>
+            <button id="btnMotivationText" class="chip btn-category" data-cat="motivation">🚀 Motivation</button>
+        </div>
+        <div id="textStatusContainer" class="status-list"></div>
+    </div>
+
+    <div id="photoSection" class="app-section hidden">
+        <div class="category-chips">
+            <button id="btnFavoritesPhoto" class="chip btn-category" data-cat="favorites" style="background: #ff2b55; color: white; font-weight: bold;">❤️ पसंदीदा</button>
+            <button id="btnLovePhoto" class="chip btn-category active" data-cat="love">❤️ Love</button>
+            <button id="btnSadPhoto" class="chip btn-category" data-cat="sad">💔 Sad</button>
+            <button id="btnMotivationPhoto" class="chip btn-category" data-cat="motivation">🚀 Motivation</button>
+        </div>
+        <div id="autoGallery"></div>
+    </div>
+
+    <div id="videoSection" class="app-section">
+        <div class="category-chips">
+            <button id="btnFavoritesVideo" class="chip btn-category" data-cat="favorites" style="background: #ff2b55; color: white; font-weight: bold;">❤️ पसंदीदा</button>
+            <button id="btnLoveVideo" class="chip btn-category active" data-cat="love">❤️ Love</button>
+            <button id="btnSadVideo" class="chip btn-category" data-cat="sad">💔 Sad</button>
+            <button id="btnMotivationVideo" class="chip btn-category" data-cat="motivation">🚀 Motivation</button>
+        </div>
+        <div class="reels-container" id="reelsContainer"></div>
+    </div>
+<script src="hindi-text.js"></script>
+<script src="gujarati-text.js"></script>
+<script src="script.js"></script>
+    
+    <script>
+        document.querySelectorAll('.btn-category').forEach(button => {
+            button.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.btn-category').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+    <div id="profileModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeProfile()">&times;</span>
+        <h2>प्रोफाइल</h2>
+        <input type="text" id="userNameInput" placeholder="अपना नाम लिखें...">
+        <button onclick="saveName()">नाम सेव करें</button>
+        <p id="displayName"></p>
+    </div>
+</div>
+</body>
+</html>
