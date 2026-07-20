@@ -1,10 +1,13 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bhojani Digital Seva Status</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- SimpleLightbox & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.3/simple-lightbox.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.3/simple-lightbox.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +17,6 @@
 
     <style>
         /* Apply Google Font Outfit to the entire page */
-        
         body {
             font-family: 'Outfit', sans-serif !important;
         }
@@ -81,6 +83,7 @@
             border-color: #0044ff !important;
             box-shadow: 0 4px 10px rgba(0, 132, 255, 0.3) !important;
         }
+
         /* 3. इमेज ग्रिड और कार्ड्स */
         #autoGallery {
             display: grid !important;
@@ -107,7 +110,7 @@
             object-position: center !important;
         }
 
-        /* --- 4. वॉटरमार्क और लाइक बटन बेस --- */
+        /* 4. वॉटरमार्क और लाइक बटन बेस */
         .gallery-item-wrapper, .video-item-wrapper {
             position: relative;
             width: 100%;
@@ -159,18 +162,20 @@
     </style>
 </head>
 <body>
+
+    <!-- Header Section -->
     <div class="brand-header" style="display: flex; align-items: center; padding: 10px; background: var(--header-bg); border-bottom: 2px solid #eee;">
-    <div class="brand-logo" style="background: #007bff; color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-right: 15px;">BDS</div>
-    
-    <div class="brand-title" style="flex-grow: 1;">
-        <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; color:#65a3e6; 
-         font-weight: 800;">BHOJANI DAILY STATUS</h2>
-        <small style="font-size: 12px; color: #666; letter-spacing: 1px;
-        ">BY BHOJANI DIGITAL SEVA</small>
-    </div>
-      <div class="user-profile" onclick="openProfile()">
-    <span id="user-initial"></span> 
-</div>
+        <div class="brand-logo" style="background: #007bff; color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-right: 15px;">BDS</div>
+        
+        <div class="brand-title" style="flex-grow: 1;">
+            <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; color:#65a3e6; font-weight: 800;">BHOJANI DAILY STATUS</h2>
+            <small style="font-size: 12px; color: #666; letter-spacing: 1px;">BY BHOJANI DIGITAL SEVA</small>
+        </div>
+
+        <div class="user-profile" onclick="openProfile()">
+            <span id="user-initial"></span> 
+        </div>
+
         <div class="header-center">
             <div class="lang-toggle-container">
                 <button id="btnLangHindi" class="lang-toggle-btn active" onclick="toggleLanguage('hindi')">🇮🇳 हिंदी</button>
@@ -179,19 +184,19 @@
         </div>
         
         <button id="darkModeBtn" class="btn-dark-toggle">🌙</button>
-        <button id="appShareBtn" class="top-action-btn" style="padding: 6px 12px; font-size: 14px; 
-        background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; 
-        font-weight: bold; margin-left: 9px;">
+        <button id="appShareBtn" class="top-action-btn" style="padding: 6px 12px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; margin-left: 9px;">
             🔗 ऐप शेयर
         </button>
     </div>
 
+    <!-- Navigation Bar -->
     <div class="main-navbar">
         <button id="tabText" class="nav-tab">📝 टेक्स्ट</button>
         <button id="tabPhotos" class="nav-tab">📸 फोटो</button>
         <button id="tabVideos" class="nav-tab active">🎥 रील्स</button>
     </div>
 
+    <!-- Text Status Section -->
     <div id="textSection" class="app-section hidden">
         <div class="category-chips">
             <button id="btnFavoritesText" class="chip btn-category" data-cat="favorites" style="background: #ff2b55; color: white; font-weight: bold;">❤️ पसंदीदा</button>
@@ -202,6 +207,7 @@
         <div id="textStatusContainer" class="status-list"></div>
     </div>
 
+    <!-- Photo Section -->
     <div id="photoSection" class="app-section hidden">
         <div class="category-chips">
             <button id="btnFavoritesPhoto" class="chip btn-category" data-cat="favorites" style="background: #ff2b55; color: white; font-weight: bold;">❤️ पसंदीदा</button>
@@ -212,6 +218,7 @@
         <div id="autoGallery"></div>
     </div>
 
+    <!-- Video Reels Section -->
     <div id="videoSection" class="app-section">
         <div class="category-chips">
             <button id="btnFavoritesVideo" class="chip btn-category" data-cat="favorites" style="background: #ff2b55; color: white; font-weight: bold;">❤️ पसंदीदा</button>
@@ -221,33 +228,37 @@
         </div>
         <div class="reels-container" id="reelsContainer"></div>
     </div>
-<script src="hindi-text.js"></script>
-<script src="gujarati-text.js"></script>
-<script src="script.js"></script>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeProfile()">&times;</span>
+            <h2>प्रोफाइल</h2>
+            <input type="text" id="userNameInput" placeholder="अपना नाम लिखें...">
+            <button onclick="saveName()">नाम सेव करें</button>
+            <p id="displayName"></p>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="hindi-text.js"></script>
+    <script src="gujarati-text.js"></script>
+    <script src="script.js"></script>
     
     <script>
+        // Category Chips Active Highlight Toggle
         document.querySelectorAll('.btn-category').forEach(button => {
             button.addEventListener('click', function() {
                 this.parentElement.querySelectorAll('.btn-category').forEach(btn => btn.classList.remove('active'));
                 this.classList.add('active');
             });
         });
-    </script>
-<script>
+    </script><script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(() => console.log('Service Worker Registered!'));
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('Service Worker Registered!'))
+      .catch((err) => console.log('Service Worker Error:', err));
   }
 </script>
-
-    <div id="profileModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeProfile()">&times;</span>
-        <h2>प्रोफाइल</h2>
-        <input type="text" id="userNameInput" placeholder="अपना नाम लिखें...">
-        <button onclick="saveName()">नाम सेव करें</button>
-        <p id="displayName"></p>
-    </div>
-</div>
 </body>
 </html>

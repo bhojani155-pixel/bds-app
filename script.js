@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+    const cloudName = "gkbhojani"; // Cloudinary Cloud Name
+
     // 🌐 भाषा डिक्शनरी
     const appLanguageData = {
         hindi: {
@@ -31,12 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
             btnSadText: "💔 ઉદાસ",
             btnMotivationText: "🚀 પ્રેરણાત્મક",
 
-            btnFavoritesPhoto: "❤️ મનપસંદ",
+            btnFavoritesPhoto: "❤️ મનપसંદ",
             btnLovePhoto: "❤️ પ્રેમ",
             btnSadPhoto: "💔 ઉદાસ",
             btnMotivationPhoto: "🚀 પ્રેરણાત્મક",
 
-            btnFavoritesVideo: "❤️ મનપસંદ",
+            btnFavoritesVideo: "❤️ મનપसંદ",
             btnLoveVideo: "❤️ પ્રેમ",
             btnSadVideo: "💔 ઉદાસ",
             btnMotivationVideo: "🚀 પ્રેરણાત્મક",
@@ -50,10 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
             noVideo: "<div style='color:#aaa; text-align:center; padding:50px;'>કોઈ વિડિયો મળ્યો નથી!</div>"
         }
     };
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(() => console.log("App ready for install!"));
-}
+
+    // Service Worker रजिस्टर
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log("App ready for install!"))
+            .catch(err => console.error("SW Registration failed:", err));
+    }
+
     // Tabs
     const tabs = {
         text: document.getElementById("tabText"),
@@ -69,7 +76,7 @@ if ('serviceWorker' in navigator) {
     };
 
     // Containers / buttons
-    const galleryContainer = document.getElementById("autoGallery");
+    const galleryContainer = document.getElementById("autoGallery") || document.getElementById("galleryContainer");
     const reelsContainer = document.getElementById("reelsContainer");
     const txtContainer = document.getElementById("textStatusContainer");
     const darkModeBtn = document.getElementById("darkModeBtn");
@@ -82,21 +89,17 @@ if ('serviceWorker' in navigator) {
     let videoObserver = null;
     let lightboxInstance = null;
 
+    // Data States
+    let allVideosData = [];
+    let allPhotosData = [];
+    let displayedVideoCount = 10; 
+    let isFetchingMore = false;
+
     // Category label helper
     function getCategoryLabel(category, lang) {
         const categoryLabels = {
-            hindi: {
-                love: "लव / शायरी",
-                sad: "सैड / शायरी",
-                motivation: "मोटिवेशन / सुविचार",
-                favorites: "पसंदीदा स्टेटस"
-            },
-            gujarati: {
-                love: "પ્રેમ / શાયરી",
-                sad: "ઉદાસ / શાયરી",
-                motivation: "પ્રેરણાત્મક / સુવાક્ય",
-                favorites: "મનપસંદ સ્ટેટસ"
-            }
+            hindi: { love: "लव / शायरी", sad: "सैड / शायरी", motivation: "मोटिवेशन / सुविचार", favorites: "पसंदीदा स्टेटस" },
+            gujarati: { love: "પ્રેમ / શાયરી", sad: "ઉદાસ / શાયરી", motivation: "પ્રેરણાત્મક / સુવાક્ય", favorites: "મનપસંદ સ્ટેટસ" }
         };
         return (categoryLabels[lang] && categoryLabels[lang][category]) || category;
     }
@@ -111,7 +114,6 @@ if ('serviceWorker' in navigator) {
         icon.innerText = "👤"; 
     }
 
-    // प्रोफाइल खोलने का फंक्शन
     window.openProfile = function() {
         const modal = document.getElementById("profileModal");
         if (modal) {
@@ -124,23 +126,22 @@ if ('serviceWorker' in navigator) {
         }
     };
 
-    // प्रोफाइल बंद करने का फंक्शन
     window.closeProfile = function() {
-        document.getElementById("profileModal").style.display = "none";
+        const modal = document.getElementById("profileModal");
+        if (modal) modal.style.display = "none";
     };
 
-    // नाम सेव करने का फंक्शन
     window.saveName = function() {
         const nameInput = document.getElementById('userNameInput').value;
         if (nameInput) {
             localStorage.setItem('bds_user_name', nameInput);
-            document.getElementById('user-initial').innerText = nameInput.charAt(0).toUpperCase();
-            document.getElementById('displayName').innerText = "नमस्ते, " + nameInput;
+            if (icon) icon.innerText = nameInput.charAt(0).toUpperCase();
+            const disp = document.getElementById('displayName');
+            if (disp) disp.innerText = "नमस्ते, " + nameInput;
             window.closeProfile();
         }
     };
 
-    // बाहर क्लिक करने पर मॉडल बंद करना
     window.onclick = function(event) {
         const modal = document.getElementById("profileModal");
         if (event.target == modal) { 
@@ -175,7 +176,7 @@ if ('serviceWorker' in navigator) {
         });
     }
 
-    // 🔙 Back button (popstate) for fullscreen / lightbox
+    // 🔙 Back button (popstate)
     window.addEventListener("popstate", () => {
         if (document.body.classList.contains("fullscreen-active")) {
             switchTab(currentTab);
@@ -206,7 +207,6 @@ if ('serviceWorker' in navigator) {
         refreshContent();
     };
 
-    // UI text change according to language
     function updateAppLanguageUI() {
         const data = appLanguageData[currentAppLang];
         if (!data) return;
@@ -265,45 +265,51 @@ if ('serviceWorker' in navigator) {
         });
     }
 
-    // 📜 Infinite scroll loop for reels
+    // 📜 Infinite scroll loop for reels (फुलस्क्रीन रील्स में अंत में पहुँचने पर वापस ऊपर लूप होना)
     function setupInfiniteScrollLoop() {
         if (!reelsContainer) return;
-
         let touchStartY = 0;
         let touchEndY = 0;
 
-        reelsContainer.addEventListener(
-            "touchstart",
-            e => {
-                touchStartY = e.changedTouches[0].screenY;
-            },
-            { passive: true }
-        );
+        reelsContainer.addEventListener("touchstart", e => { touchStartY = e.changedTouches[0].screenY; }, { passive: true });
 
-        reelsContainer.addEventListener(
-            "touchend",
-            e => {
-                touchEndY = e.changedTouches[0].screenY;
-                if (!document.body.classList.contains("fullscreen-active")) return;
+        reelsContainer.addEventListener("touchend", e => {
+            touchEndY = e.changedTouches[0].screenY;
+            if (!document.body.classList.contains("fullscreen-active")) return;
 
-                const totalScrollHeight = reelsContainer.scrollHeight;
-                const currentScrollTop = reelsContainer.scrollTop;
-                const containerHeight = reelsContainer.clientHeight;
+            const totalScrollHeight = reelsContainer.scrollHeight;
+            const currentScrollTop = reelsContainer.scrollTop;
+            const containerHeight = reelsContainer.clientHeight;
 
-                const isAtBottom = currentScrollTop + containerHeight >= totalScrollHeight - 50;
-                const isSwipeUp = touchStartY - touchEndY > 50;
+            const isAtBottom = currentScrollTop + containerHeight >= totalScrollHeight - 50;
+            const isSwipeUp = touchStartY - touchEndY > 50;
 
-                if (isAtBottom && isSwipeUp) {
-                    const firstVideoCard = reelsContainer.firstElementChild;
-                    if (firstVideoCard) {
-                        setTimeout(() => {
-                            firstVideoCard.scrollIntoView({ behavior: "smooth" });
-                        }, 100);
+            if (isAtBottom && isSwipeUp) {
+                // अगर सारे वीडियो खत्म हो गए हैं, तो पहले वीडियो पर वापस लूप कर दो
+                const firstVideoCard = reelsContainer.firstElementChild;
+                if (firstVideoCard) {
+                    setTimeout(() => { firstVideoCard.scrollIntoView({ behavior: "smooth" }); }, 100);
+                }
+            }
+        }, { passive: true });
+
+        // फुलस्क्रीन रील्स में स्क्रॉल करते वक्त जैसे ही 8वें-9वें वीडियो के पास पहुँचें, अगले वीडियो लोड कर लो
+        reelsContainer.addEventListener("scroll", () => {
+            if (document.body.classList.contains("fullscreen-active")) {
+                const scrollTop = reelsContainer.scrollTop;
+                const scrollHeight = reelsContainer.scrollHeight;
+                const clientHeight = reelsContainer.clientHeight;
+
+                if (scrollTop + clientHeight >= scrollHeight - 400) {
+                    if (displayedVideoCount < allVideosData.length && !isFetchingMore) {
+                        isFetchingMore = true;
+                        displayedVideoCount += 10; // 10 और वीडियो जोड़ो ताकि रुकना न पड़े
+                        appendMoreVideos();
+                        setTimeout(() => { isFetchingMore = false; }, 500);
                     }
                 }
-            },
-            { passive: true }
-        );
+            }
+        });
     }
 
     // 🔘 Category chips show/hide
@@ -318,10 +324,7 @@ if ('serviceWorker' in navigator) {
         currentTab = targetTab;
         localStorage.setItem("bds_current_tab", targetTab);
 
-        document.querySelectorAll("video").forEach(v => {
-            v.pause();
-            v.muted = true;
-        });
+        document.querySelectorAll("video").forEach(v => { v.pause(); v.muted = true; });
 
         document.body.classList.remove("fullscreen-active");
         if (sections.videos) sections.videos.classList.remove("fullscreen-active");
@@ -331,7 +334,6 @@ if ('serviceWorker' in navigator) {
 
         Object.keys(sections).forEach(key => {
             if (!sections[key]) return;
-
             if (key === targetTab) {
                 sections[key].classList.remove("hidden");
                 if (tabs[key]) tabs[key].classList.add("active");
@@ -349,28 +351,48 @@ if ('serviceWorker' in navigator) {
     if (tabs.photos) tabs.photos.addEventListener("click", () => { currentCategory = "love"; switchTab("photos"); });
     if (tabs.videos) tabs.videos.addEventListener("click", () => { currentCategory = "love"; switchTab("videos"); });
 
-    // 📸 फोटो गैलरी लोड (15 per batch + load more + loop)
-    function loadPhotos(index, category, loadedCount = 0) {
-        if (index === 1) {
-            const oldWrapper = document.querySelector(".load-more-wrapper-photo");
-            if (oldWrapper) oldWrapper.remove();
+    // 📸 1. Cloudinary से फोटो लोड करने का फंक्शन (सारे फोटो लोड ताकि लाइटबॉक्स में 15 के बाद 16वां फोटो आसानी से खुले)
+    async function loadPhotosFromCloudinary(category) {
+        if (!galleryContainer) return;
+        galleryContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:30px; grid-column: span 4;'>फोटो लोड हो रहे हैं...</p>";
+
+        const tag = `${currentAppLang}-${category}`; 
+        const url = `https://res.cloudinary.com/${cloudName}/image/list/${tag}.json`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Cloudinary Error or Tag Not Found");
+            
+            const data = await response.json();
+            allPhotosData = data.resources || [];
+
+            renderPhotoGridAll();
+        } catch (error) {
+            console.error("फोटो लोड करने में गड़बड़ हुई:", error);
+            galleryContainer.innerHTML = appLanguageData[currentAppLang].noPhoto;
         }
+    }
 
-        const imgUrl = `images/${currentAppLang}/${category}/${index}.jpg`;
+    function renderPhotoGridAll() {
+        if (!galleryContainer) return;
+        galleryContainer.innerHTML = '';
 
-        fetch(imgUrl, { method: "HEAD" }).then(res => {
-            if (res.ok && currentCategory === category && currentTab === "photos") {
+        if (allPhotosData.length > 0) {
+            allPhotosData.forEach(image => {
+                const imgUrl = `https://res.cloudinary.com/${cloudName}/image/upload/v${image.version}/${image.public_id}.${image.format}`;
+                const photoId = `${currentAppLang}-${currentCategory}-photo-${image.public_id}`;
+
                 const itemDiv = document.createElement("div");
                 itemDiv.className = "gallery-item";
 
                 const aTag = document.createElement("a");
                 aTag.href = imgUrl;
                 aTag.classList.add("gallery-link");
-                aTag.setAttribute("data-img-id", `${currentAppLang}-${category}-photo-${index}`);
+                aTag.setAttribute("data-img-id", photoId);
 
                 const img = document.createElement("img");
                 img.src = imgUrl;
-                img.loading = "lazy";
+                img.loading = "lazy"; // लेज़ी लोडिंग से वेबसाइट भारी नहीं होगी
 
                 const watermark = document.createElement("div");
                 watermark.className = "bds-watermark";
@@ -380,66 +402,15 @@ if ('serviceWorker' in navigator) {
                 itemDiv.appendChild(aTag);
                 itemDiv.appendChild(watermark);
                 galleryContainer.appendChild(itemDiv);
+            });
 
-                loadedCount++;
-
-                if (loadedCount >= 15) {
-                    const nextImgUrl = `images/${currentAppLang}/${category}/${index + 1}.jpg`;
-                    fetch(nextImgUrl, { method: "HEAD" }).then(nextRes => {
-                        const oldWrapper = document.querySelector(".load-more-wrapper-photo");
-                        if (oldWrapper) oldWrapper.remove();
-                        
-                        const oldSentinel = document.querySelector(".photo-sentinel");
-                        if (oldSentinel) oldSentinel.remove();
-
-                        if (nextRes.ok && currentCategory === category && currentTab === "photos") {
-                            const sentinel = document.createElement("div");
-                            sentinel.className = "photo-sentinel";
-                            galleryContainer.after(sentinel);
-
-                            const observer = new IntersectionObserver((entries) => {
-                                if (entries[0].isIntersecting) {
-                                    observer.unobserve(sentinel);
-                                    sentinel.remove();
-                                    loadPhotos(index + 1, category, 0);
-                                }
-                            }, { threshold: 0.1 });
-
-                            observer.observe(sentinel);
-                        } else {
-                            const loopBtn = document.createElement("button");
-                            loopBtn.className = "load-more-btn";
-                            loopBtn.innerText = currentAppLang === "gujarati" ? "પાછાંથી જુઓ" : "फिर से शुरू करें";
-
-                            loopBtn.onclick = (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const firstPhoto = galleryContainer.firstElementChild;
-                                if (firstPhoto) firstPhoto.scrollIntoView({ behavior: "smooth" });
-                            };
-                            
-                            const wrapperDiv = document.createElement("div");
-                            wrapperDiv.className = "load-more-wrapper load-more-wrapper-photo";
-                            wrapperDiv.appendChild(loopBtn);
-                            galleryContainer.after(wrapperDiv);
-                        }
-                        
-                        setupPhotoLightbox();
-                    });
-                } else {
-                    loadPhotos(index + 1, category, loadedCount);
-                }
-            } else {
-                if (index === 1 && galleryContainer.children.length === 0) {
-                    galleryContainer.innerHTML = appLanguageData[currentAppLang].noPhoto;
-                } else if (index > 1) {
-                    setupPhotoLightbox();
-                }
-            }
-        });
+            setupPhotoLightbox();
+        } else {
+            galleryContainer.innerHTML = appLanguageData[currentAppLang].noPhoto;
+        }
     }
 
-    // 📸 फोटो लाइटबॉक्स (SimpleLightbox)
+    // 📸 फोटो लाइटबॉक्स (SimpleLightbox - 15 के बाद 16वां और लूप के साथ)
     function setupPhotoLightbox() {
         if (typeof SimpleLightbox === "undefined") return;
 
@@ -452,7 +423,7 @@ if ('serviceWorker' in navigator) {
         if (!links.length) return;
 
         lightboxInstance = new SimpleLightbox(".gallery-link", {
-            loop: true,
+            loop: true, // आखिरी फोटो से पहला फोटो अपने आप आ जाएगा
             nextOnImageClick: true,
             closeOnOverlayClick: true,
             showCaptions: false
@@ -470,18 +441,7 @@ if ('serviceWorker' in navigator) {
                     l => l.getAttribute("href") === img.getAttribute("src")
                 );
 
-                let imgId = "";
-                if (currentLink) {
-                    imgId = currentLink.getAttribute("data-img-id") || "";
-                }
-
-                if (!imgId) {
-                    const urlParts = img.src.split("/");
-                    const filename = urlParts[urlParts.length - 1].replace(".jpg", "");
-                    const catName = urlParts[urlParts.length - 2];
-                    const langName = urlParts[urlParts.length - 3];
-                    imgId = `${langName}-${catName}-photo-${filename}`;
-                }
+                let imgId = currentLink ? currentLink.getAttribute("data-img-id") : "";
 
                 const box = document.createElement("div");
                 box.className = "sl-custom-actions";
@@ -507,270 +467,76 @@ if ('serviceWorker' in navigator) {
                         photoLikeBtn.innerHTML = "🤍 लाइक";
                         photoLikeBtn.style.color = "#fff";
                         photoLikeBtn.style.background = "rgba(0,0,0,0.7)";
-                        if (currentCategory === "favorites" && currentLink) {
-                            currentLink.closest(".gallery-item")?.remove();
-                            lightboxInstance.close();
-                        }
                     } else {
                         favoriteItems.push(imgId);
                         photoLikeBtn.innerHTML = "❤️ लाइक";
                         photoLikeBtn.style.color = "#ff2b55";
                         photoLikeBtn.style.background = "#fff";
                     }
-
                     localStorage.setItem("bds_favorites", JSON.stringify(favoriteItems));
                 };
 
                 box.querySelector(".sl-custom-share-btn").onclick = () => {
-                    let shareMessage = currentAppLang === "gujarati" 
-                        ? "શાનદાર ફોટો જુઓ:" 
-                        : "शानदार फोटो देखें:";
-                    
+                    let shareMessage = currentAppLang === "gujarati" ? "શાનદાર ફોટો જુઓ:" : "शानदार फोटो देखें:";
                     shareContent("Bhojani Digital Seva", shareMessage, img.src);
                 };
 
                 box.querySelector(".sl-custom-download-btn").onclick = () => {
                     const a = document.createElement("a");
                     a.href = img.src;
-                    a.download = "photo.jpg";
+                    a.download = "bds_status.jpg";
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
                 };
 
-                box.querySelector(".sl-custom-close-btn").onclick = () => {
-                    lightboxInstance.close();
-                };
+                box.querySelector(".sl-custom-close-btn").onclick = () => { lightboxInstance.close(); };
 
                 document.body.appendChild(box);
             }, 80);
         }
 
-        lightboxInstance.on("show.simplelightbox", () => {
-            history.pushState({ fullscreen: true }, "");
-            renderActions();
-        });
-
+        lightboxInstance.on("show.simplelightbox", () => { history.pushState({ fullscreen: true }, ""); renderActions(); });
         lightboxInstance.on("changed.simplelightbox", renderActions);
-
         lightboxInstance.on("close.simplelightbox", () => {
             const old = document.querySelector(".sl-custom-actions");
             if (old) old.remove();
         });
     }
 
-    // ❤️ सिंगल फोटो लोड (Favorites)
-    function loadSinglePhotoForFavorites(index, category, lang, photoId) {
-        const imgUrl = `images/${lang}/${category}/${index}.jpg`;
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "gallery-item";
+    // 🎥 2. Cloudinary से वीडियो लोड करने का फंक्शन
+    async function loadVideosFromCloudinary(category) {
+        if (!reelsContainer) return;
+        reelsContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:30px;'>वीडियो लोड हो रहे हैं...</p>";
 
-        const aTag = document.createElement("a");
-        aTag.href = imgUrl;
-        aTag.classList.add("gallery-link");
-        aTag.setAttribute("data-img-id", photoId);
+        const tag = `${currentAppLang}-${category}`; 
+        const url = `https://res.cloudinary.com/${cloudName}/video/list/${tag}.json`;
 
-        const img = document.createElement("img");
-        img.src = imgUrl;
-        img.loading = "lazy";
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Cloudinary Error or Tag Not Found");
 
-        const watermark = document.createElement("div");
-        watermark.className = "bds-watermark";
-        watermark.innerText = "BDS";
+            const data = await response.json();
+            allVideosData = data.resources || [];
+            displayedVideoCount = 10; // शुरुआती लिमिट 10 वीडियो
 
-        aTag.appendChild(img);
-        itemDiv.appendChild(aTag);
-        itemDiv.appendChild(watermark);
-        galleryContainer.appendChild(itemDiv);
-
-        setupPhotoLightbox();
+            renderVideoGrid();
+        } catch (error) {
+            console.error("वीडियो लोड करने में गड़बड़ हुई:", error);
+            reelsContainer.innerHTML = appLanguageData[currentAppLang].noVideo;
+        }
     }
 
-    // 🎥 सारे वीडियो लोड (category-wise, 10 per batch + load more + loop)
-    function loadAllCategoryVideos(startIndex, category, loadedCount = 0) {
-        const videoId = `${currentAppLang}-${category}-video-${startIndex}`;
-        const videoUrl = `videos/${currentAppLang}/${category}/${startIndex}.mp4`;
+    function createVideoElementItem(videoItem) {
+        const videoUrl = `https://res.cloudinary.com/${cloudName}/video/upload/v${videoItem.version}/${videoItem.public_id}.${videoItem.format}`;
+        const videoId = `${currentAppLang}-${currentCategory}-video-${videoItem.public_id}`;
 
-        fetch(videoUrl, { method: "HEAD" }).then(res => {
-            if (res.ok && currentCategory === category && currentTab === "videos") {
-                const wrapper = document.createElement("div");
-                wrapper.className = "reel-wrapper grid-video-item";
-
-                const video = document.createElement("video");
-                video.src = videoUrl;
-                video.className = "preview-video";
-                video.preload = "metadata";
-                video.muted = true;
-                video.playsInline = true;
-                video.setAttribute("data-video-id", videoId);
-
-                const watermark = document.createElement("div");
-                watermark.className = "bds-watermark";
-                const categoryLabelText = getCategoryLabel(category, currentAppLang);
-
-                watermark.innerHTML = `
-                    <div class="news-badge-top"><span>${categoryLabelText}</span></div>
-                    <div class="news-badge-bottom">Bhojani Digital Seva</div>
-                    <span class="grid-watermark-text">BDS</span>
-                `;
-
-                video.onclick = () => {
-                    if (!document.body.classList.contains("fullscreen-active")) {
-                        history.pushState({ fullscreen: true }, "");
-                        document.body.classList.add("fullscreen-active");
-                        sections.videos.classList.add("fullscreen-active");
-                        reelsContainer.className = "reels-container reels-container-fullscreen";
-                        toggleCategoryButtons(false);
-
-                        document.querySelectorAll("#reelsContainer .reel-wrapper").forEach(w => w.classList.remove("grid-video-item"));
-                        document.querySelectorAll("video").forEach(v => {
-                            v.pause();
-                            v.className = "fullscreen-video";
-                            v.muted = true;
-                        });
-
-                        video.className = "fullscreen-video";
-                        video.muted = false;
-                        video.play().catch(() => {
-                            video.muted = true;
-                            video.play();
-                        });
-
-                        setupVideoObserver();
-                        wrapper.scrollIntoView({ behavior: "instant" });
-                    } else {
-                        if (video.paused) {
-                            video.muted = false;
-                            video.play();
-                        } else {
-                            video.pause();
-                        }
-                    }
-                };
-
-                video.addEventListener('dblclick', (e) => {
-                    const heart = document.createElement('div');
-                    heart.innerHTML = '❤️';
-                    heart.className = 'double-tap-heart heart-animated';
-                    wrapper.appendChild(heart);
-
-                    const likeBtn = wrapper.querySelector('.fullscreen-like-btn');
-                    if (!likeBtn.classList.contains('liked')) {
-                        likeBtn.click(); 
-                    }
-                    setTimeout(() => { heart.remove(); }, 800);
-                });
-
-                const actionsDiv = document.createElement("div");
-                actionsDiv.className = "reel-actions hidden-actions";
-                
-                const fullscreenLikeBtn = document.createElement("button");
-                let savedLikes = JSON.parse(localStorage.getItem("bds_favorites")) || [];
-                const isAlreadyLiked = savedLikes.includes(videoId);
-
-                fullscreenLikeBtn.className = `action-btn fullscreen-like-btn ${isAlreadyLiked ? "liked" : ""}`;
-                fullscreenLikeBtn.innerHTML = isAlreadyLiked ? "❤️" : "🤍";
-
-                fullscreenLikeBtn.onclick = e => {
-                    e.stopPropagation();
-                    handleLike(videoId, fullscreenLikeBtn); 
-                };
-
-                const shareBtn = document.createElement("button");
-                shareBtn.className = "action-btn whatsapp-btn";
-                shareBtn.innerHTML = "💬";
-                shareBtn.onclick = e => {
-                    e.stopPropagation();
-                    let shareMessage = currentAppLang === "gujarati" 
-                        ? "શાનદાર વિડીયો જુઓ:" 
-                        : "शानदार वीडियो देखें:";
-                    shareContent("Bhojani Digital Seva", shareMessage, video.src);
-                };
-
-                const downloadBtn = document.createElement("button");
-                downloadBtn.className = "action-btn";
-                downloadBtn.innerHTML = "💾";
-                downloadBtn.onclick = e => {
-                    e.stopPropagation();
-                    const a = document.createElement("a");
-                    a.href = videoUrl;
-                    a.download = `${category}-${startIndex}.mp4`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                };
-
-                const closeBtn = document.createElement("button");
-                closeBtn.className = "action-btn close-reel-btn";
-                closeBtn.innerHTML = "↩️<span>बैक</span>";
-                closeBtn.onclick = e => {
-                    e.stopPropagation();
-                    history.back();
-                };
-
-                actionsDiv.appendChild(fullscreenLikeBtn);
-                actionsDiv.appendChild(shareBtn);
-                actionsDiv.appendChild(downloadBtn);
-                actionsDiv.appendChild(closeBtn);
-
-                wrapper.appendChild(video);
-                wrapper.appendChild(watermark);
-                wrapper.appendChild(actionsDiv);
-                reelsContainer.appendChild(wrapper);
-
-                loadedCount++;
-
-                if (loadedCount >= 10) {
-                    const nextVideoUrl = `videos/${currentAppLang}/${category}/${startIndex + 1}.mp4`;
-                    fetch(nextVideoUrl, { method: "HEAD" }).then(nextRes => {
-                        if (nextRes.ok && currentCategory === category && currentTab === "videos") {
-                            const sentinel = document.createElement("div");
-                            sentinel.className = "scroll-sentinel";
-                            reelsContainer.after(sentinel);
-
-                            const observer = new IntersectionObserver((entries) => {
-                                if (entries[0].isIntersecting) {
-                                    observer.unobserve(sentinel);
-                                    sentinel.remove(); 
-                                    loadAllCategoryVideos(startIndex + 1, category, 0);
-                                }
-                            }, { threshold: 0.1 }); 
-
-                            observer.observe(sentinel);
-                        } else {
-                            const loopBtn = document.createElement("button");
-                            loopBtn.className = "load-more-btn";
-                            loopBtn.innerText = currentAppLang === "gujarati" ? "પાછાંથી જુઓ" : "फिर से शुरू करें";
-                            loopBtn.onclick = () => {
-                                const firstVideo = reelsContainer.firstElementChild;
-                                if (firstVideo) firstVideo.scrollIntoView({ behavior: "smooth" });
-                            };
-                            const wrapperDiv = document.createElement("div");
-                            wrapperDiv.className = "load-more-wrapper";
-                            wrapperDiv.appendChild(loopBtn);
-                            reelsContainer.after(wrapperDiv);
-                        }
-                    });
-                } else {
-                    loadAllCategoryVideos(startIndex + 1, category, loadedCount);
-                }
-            } else {
-                if (reelsContainer.children.length === 0) {
-                    reelsContainer.innerHTML = appLanguageData[currentAppLang].noVideo;
-                }
-            }
-        });
-    }
-
-    // ❤️ सिंगल वीडियो लोड (Favorites)
-    function loadSingleVideoForFavorites(index, category, lang, videoId) {
-        const videoUrl = `videos/${lang}/${category}/${index}.mp4`;
         const wrapper = document.createElement("div");
-        wrapper.className = "reel-wrapper grid-video-item";
+        wrapper.className = document.body.classList.contains("fullscreen-active") ? "reel-wrapper" : "reel-wrapper grid-video-item";
 
         const video = document.createElement("video");
         video.src = videoUrl;
-        video.className = "preview-video";
+        video.className = document.body.classList.contains("fullscreen-active") ? "fullscreen-video" : "preview-video";
         video.preload = "metadata";
         video.muted = true;
         video.playsInline = true;
@@ -778,7 +544,13 @@ if ('serviceWorker' in navigator) {
 
         const watermark = document.createElement("div");
         watermark.className = "bds-watermark";
-        watermark.innerText = "BDS";
+        const categoryLabelText = getCategoryLabel(currentCategory, currentAppLang);
+
+        watermark.innerHTML = `
+            <div class="news-badge-top"><span>${categoryLabelText}</span></div>
+            <div class="news-badge-bottom">Bhojani Digital Seva</div>
+            <span class="grid-watermark-text">BDS</span>
+        `;
 
         video.onclick = () => {
             if (!document.body.classList.contains("fullscreen-active")) {
@@ -788,7 +560,9 @@ if ('serviceWorker' in navigator) {
                 reelsContainer.className = "reels-container reels-container-fullscreen";
                 toggleCategoryButtons(false);
 
-                document.querySelectorAll("#reelsContainer .reel-wrapper").forEach(w => w.classList.remove("grid-video-item"));
+                document.querySelectorAll("#reelsContainer .reel-wrapper").forEach(w => {
+                    w.classList.remove("grid-video-item");
+                });
                 document.querySelectorAll("video").forEach(v => {
                     v.pause();
                     v.className = "fullscreen-video";
@@ -814,21 +588,32 @@ if ('serviceWorker' in navigator) {
             }
         };
 
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "reel-actions hidden-actions";
+        video.addEventListener('dblclick', () => {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.className = 'double-tap-heart heart-animated';
+            wrapper.appendChild(heart);
 
+            const likeBtn = wrapper.querySelector('.fullscreen-like-btn');
+            if (likeBtn && !likeBtn.classList.contains('liked')) {
+                likeBtn.click(); 
+            }
+            setTimeout(() => { heart.remove(); }, 800);
+        });
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = document.body.classList.contains("fullscreen-active") ? "reel-actions" : "reel-actions hidden-actions";
+        
         const fullscreenLikeBtn = document.createElement("button");
-        fullscreenLikeBtn.className = "action-btn fullscreen-like-btn liked";
-        fullscreenLikeBtn.innerHTML = "❤️";
+        let savedLikes = JSON.parse(localStorage.getItem("bds_favorites")) || [];
+        const isAlreadyLiked = savedLikes.includes(videoId);
+
+        fullscreenLikeBtn.className = `action-btn fullscreen-like-btn ${isAlreadyLiked ? "liked" : ""}`;
+        fullscreenLikeBtn.innerHTML = isAlreadyLiked ? "❤️" : "🤍";
 
         fullscreenLikeBtn.onclick = e => {
             e.stopPropagation();
-            handleLike(videoId, fullscreenLikeBtn);
-            wrapper.remove();
-
-            if (reelsContainer.children.length === 0) {
-                reelsContainer.innerHTML = appLanguageData[currentAppLang].emptyFav;
-            }
+            handleLike(videoId, fullscreenLikeBtn); 
         };
 
         const shareBtn = document.createElement("button");
@@ -836,9 +621,7 @@ if ('serviceWorker' in navigator) {
         shareBtn.innerHTML = "💬";
         shareBtn.onclick = e => {
             e.stopPropagation();
-            let shareMessage = currentAppLang === "gujarati" 
-                ? "શાનદાર વિડીયો જુઓ:" 
-                : "शानदार वीडियो देखें:";
+            let shareMessage = currentAppLang === "gujarati" ? "શાનદાર વિડીયો જુઓ:" : "शानदार वीडियो देखें:";
             shareContent("Bhojani Digital Seva", shareMessage, video.src);
         };
 
@@ -849,7 +632,7 @@ if ('serviceWorker' in navigator) {
             e.stopPropagation();
             const a = document.createElement("a");
             a.href = videoUrl;
-            a.download = `${category}-${index}.mp4`;
+            a.download = `bds_video.mp4`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -871,56 +654,63 @@ if ('serviceWorker' in navigator) {
         wrapper.appendChild(video);
         wrapper.appendChild(watermark);
         wrapper.appendChild(actionsDiv);
-        reelsContainer.appendChild(wrapper);
+
+        return wrapper;
     }
 
-    // 📋 ग्लोबल कॉपी फंक्शन
-    function copyAppText(text, btnElement) {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand("copy"); 
-            const originalText = btnElement.innerText;
-            btnElement.innerText = "✅ कॉपीड!";
-            setTimeout(() => { btnElement.innerText = originalText; }, 2000);
-        } catch (err) {
-            console.error("Copy failed:", err);
+    function renderVideoGrid() {
+        if (!reelsContainer) return;
+        reelsContainer.innerHTML = '';
+
+        if (allVideosData.length > 0) {
+            const videosToDisplay = allVideosData.slice(0, displayedVideoCount);
+            videosToDisplay.forEach(videoItem => {
+                const wrapper = createVideoElementItem(videoItem);
+                reelsContainer.appendChild(wrapper);
+            });
+        } else {
+            reelsContainer.innerHTML = appLanguageData[currentAppLang].noVideo;
         }
-        document.body.removeChild(textArea);
     }
 
-    // 💬 ग्लोबल शेयर फंक्शन
-    async function shareAppText(title, text) {
-        if (navigator.share) {
-            try {
-                await navigator.share({ title: title, text: text });
-            } catch (err) {
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+    // फुलस्क्रीन मोड में नीचे स्क्रॉल करने पर अगले वीडियो आटोमेटिक जोड़ने के लिए
+    function appendMoreVideos() {
+        if (!reelsContainer) return;
+        const currentCount = reelsContainer.children.length;
+        const videosToDisplay = allVideosData.slice(currentCount, displayedVideoCount);
+
+        videosToDisplay.forEach(videoItem => {
+            const wrapper = createVideoElementItem(videoItem);
+            reelsContainer.appendChild(wrapper);
+        });
+
+        setupVideoObserver();
+    }
+
+    // 📜 ग्रिड व्यू और नॉर्मल स्क्रॉल के लिए इनफिनिट स्क्रॉल
+    window.addEventListener("scroll", () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
+            if (isFetchingMore) return;
+
+            if (!document.body.classList.contains("fullscreen-active")) {
+                if (currentTab === "videos" && displayedVideoCount < allVideosData.length) {
+                    isFetchingMore = true;
+                    displayedVideoCount += 10; 
+                    renderVideoGrid();
+                    setTimeout(() => { isFetchingMore = false; }, 500);
+                }
             }
-        } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
         }
-    }
+    });
 
-    // 📋 टेक्स्ट स्टेटस (20 per batch + load more + loop)
-    function loadTextStatus(category, startIndex = 0, loadedCount = 0) {
+    // 📋 टेक्स्ट स्टेटस लोडर
+    function loadTextStatus(category) {
         if (!txtContainer) return;
-        if (category === "favorites") return;
+        txtContainer.innerHTML = "";
 
-        if (startIndex === 0) {
-            txtContainer.innerHTML = "";
-            const oldWrapper = document.querySelector(".load-more-wrapper-text");
-            if (oldWrapper) oldWrapper.remove();
-        }
-
-        let currentDataSource = null;
-        if (currentAppLang === "hindi") {
-            currentDataSource = typeof hindiStatusData !== "undefined" ? hindiStatusData : null;
-        } else {
-            currentDataSource = typeof gujaratiStatusData !== "undefined" ? gujaratiStatusData : null;
-        }
+        let currentDataSource = currentAppLang === "hindi" 
+            ? (typeof hindiStatusData !== "undefined" ? hindiStatusData : null)
+            : (typeof gujaratiStatusData !== "undefined" ? gujaratiStatusData : null);
 
         if (!currentDataSource) {
             txtContainer.innerHTML = "डेटा लोड नहीं हो पाया।";
@@ -933,13 +723,10 @@ if ('serviceWorker' in navigator) {
             return;
         }
 
-        for (let i = startIndex; i < list.length && loadedCount < 20; i++) {
-            const statusText = list[i];
+        list.forEach((statusText, i) => {
             const textId = `${currentAppLang}-${category}-text-${i}`;
-
             const card = document.createElement("div");
             card.className = "text-status-card";
-
             const p = document.createElement("p");
             p.innerText = statusText;
 
@@ -948,7 +735,6 @@ if ('serviceWorker' in navigator) {
 
             const likeBtn = document.createElement("button");
             likeBtn.style = "padding:5px 10px; font-size:14px; background:none; border:none; cursor:pointer;";
-
             let savedLikes = JSON.parse(localStorage.getItem("bds_favorites")) || [];
             likeBtn.innerHTML = savedLikes.includes(textId) ? "❤️" : "🤍";
 
@@ -957,9 +743,6 @@ if ('serviceWorker' in navigator) {
                 if (favoriteItems.includes(textId)) {
                     favoriteItems = favoriteItems.filter(id => id !== textId);
                     likeBtn.innerHTML = "🤍";
-                    if (currentCategory === "favorites" || category === "favorites") {
-                        card.remove();
-                    }
                 } else {
                     favoriteItems.push(textId);
                     likeBtn.innerHTML = "❤️";
@@ -982,219 +765,110 @@ if ('serviceWorker' in navigator) {
 
             card.appendChild(p);
             card.appendChild(actionDiv);
-
             txtContainer.appendChild(card);
-            loadedCount++;
-            startIndex = i + 1;
+        });
+    }
+
+    function copyAppText(text, btnElement) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand("copy"); 
+            const originalText = btnElement.innerText;
+            btnElement.innerText = "✅ कॉपीड!";
+            setTimeout(() => { btnElement.innerText = originalText; }, 2000);
+        } catch (err) {
+            console.error("Copy failed:", err);
         }
+        document.body.removeChild(textArea);
+    }
 
-        if (startIndex < list.length) {
-            const loadMoreBtn = document.createElement("button");
-            loadMoreBtn.className = "load-more-btn";
-            loadMoreBtn.innerText = currentAppLang === "gujarati" ? "વધુ લખાણ જુઓ" : "और टेक्स्ट देखें";
-
-            loadMoreBtn.onclick = () => {
-                const parent = loadMoreBtn.parentElement;
-                if (parent && parent.classList.contains("load-more-wrapper-text")) {
-                    parent.remove();
-                } else {
-                    loadMoreBtn.remove();
-                }
-                loadTextStatus(category, startIndex, 0);
-            };
-
-            const wrapperDiv = document.createElement("div");
-            wrapperDiv.className = "load-more-wrapper load-more-wrapper-text";
-            wrapperDiv.appendChild(loadMoreBtn);
-            txtContainer.appendChild(wrapperDiv); 
+    async function shareAppText(title, text) {
+        if (navigator.share) {
+            try { await navigator.share({ title: title, text: text }); } 
+            catch (err) { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank"); }
         } else {
-            const loopBtn = document.createElement("button");
-            loopBtn.className = "load-more-btn";
-            loopBtn.innerText = currentAppLang === "gujarati" ? "પાછાંથી વાંચો" : "फिर से शुरू करें";
-
-            loopBtn.onclick = () => {
-                const firstCard = txtContainer.firstElementChild;
-                if (firstCard) firstCard.scrollIntoView({ behavior: "smooth" });
-            };
-
-            const wrapperDiv = document.createElement("div");
-            wrapperDiv.className = "load-more-wrapper load-more-wrapper-text";
-            wrapperDiv.appendChild(loopBtn);
-            txtContainer.appendChild(wrapperDiv); 
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
         }
     }
 
-    // ❤️ सिंगल टेक्स्ट लोड (Favorites)
-    function loadSingleTextForFavorites(index, category, lang, textId) {
-        if (!txtContainer) return;
-
-        let dataSource = null;
-        if (lang === "hindi") {
-            dataSource = typeof hindiStatusData !== "undefined" ? hindiStatusData : null;
-        } else {
-            dataSource = typeof gujaratiStatusData !== "undefined" ? gujaratiStatusData : null;
-        }
-        if (!dataSource) return;
-
-        const list = dataSource[category];
-        if (!list || typeof list[index] === "undefined") return;
-
-        const statusText = list[index];
-        const card = document.createElement("div");
-        card.className = "text-status-card";
-
-        const p = document.createElement("p");
-        p.innerText = statusText;
-
-        const actionDiv = document.createElement("div");
-        actionDiv.style = "position:absolute; bottom:10px; right:15px; display:flex; gap:10px; align-items:center;";
-
-        const likeBtn = document.createElement("button");
-        likeBtn.style = "padding:5px 10px; font-size:14px; background:none; border:none; cursor:pointer;";
-        likeBtn.innerHTML = "❤️"; 
-
-        likeBtn.onclick = () => {
-            let favoriteItems = JSON.parse(localStorage.getItem("bds_favorites")) || [];
-            if (favoriteItems.includes(textId)) {
-                favoriteItems = favoriteItems.filter(id => id !== textId);
-                localStorage.setItem("bds_favorites", JSON.stringify(favoriteItems));
-                card.remove();
-            }
-        };
-
-        const copyBtn = document.createElement("button");
-        copyBtn.innerHTML = "📋 कॉपी";
-        copyBtn.onclick = () => { copyAppText(statusText, copyBtn); };
-
-        const shareBtn = document.createElement("button");
-        shareBtn.innerHTML = "💬 शेयर";
-        shareBtn.style = "padding:5px 12px; font-size:12px; background:#25D366; color:white; border:none; border-radius:5px;";
-        shareBtn.onclick = () => { shareAppText("Bhojani Digital Seva", statusText); };
-
-        actionDiv.appendChild(likeBtn);
-        actionDiv.appendChild(copyBtn);
-        actionDiv.appendChild(shareBtn);
-
-        card.appendChild(p);
-        card.appendChild(actionDiv);
-
-        txtContainer.appendChild(card);
-    }
-
-    // 🔄 कंटेंट रिफ्रेश (tab + category + language)
+    // 🔄 3. कंटेंट रिफ्रेश
     function refreshContent() {
         if (galleryContainer) galleryContainer.innerHTML = "";
         if (reelsContainer) reelsContainer.innerHTML = "";
         if (txtContainer) txtContainer.innerHTML = "";
         if (reelsContainer) reelsContainer.className = "reels-container video-grid-layout";
 
-        const oldVideoWrapper = document.querySelector(".load-more-wrapper-video");
-        if (oldVideoWrapper) oldVideoWrapper.remove();
-
-        const oldPhotoWrapper = document.querySelector(".load-more-wrapper-photo");
-        if (oldPhotoWrapper) oldPhotoWrapper.remove();
-
-        const oldTextWrapper = document.querySelector(".load-more-wrapper-text");
-        if (oldTextWrapper) oldTextWrapper.remove();
-
         if (currentCategory === "favorites") {
-            const savedLikes = JSON.parse(localStorage.getItem("bds_favorites")) || [];
-            let hasItemsInCurrentTab = false;
-
-            if (savedLikes.length > 0) {
-                savedLikes.forEach(itemId => {
-                    const parts = itemId.split("-");
-                    if (parts.length < 4) return;
-
-                    const lang = parts[0];
-                    const cat = parts[1];
-                    const type = parts[2];
-                    const idx = parseInt(parts[3], 10);
-
-                    if (lang !== currentAppLang) return;
-
-                    if (currentTab === "videos" && type === "video") {
-                        loadSingleVideoForFavorites(idx, cat, lang, itemId);
-                        hasItemsInCurrentTab = true;
-                    } else if (currentTab === "photos" && type === "photo") {
-                        loadSinglePhotoForFavorites(idx, cat, lang, itemId);
-                        hasItemsInCurrentTab = true;
-                    } else if (currentTab === "text" && type === "text") {
-                        loadSingleTextForFavorites(idx, cat, lang, itemId);
-                        hasItemsInCurrentTab = true;
-                    }
-                });
-            }
-
-            if (!hasItemsInCurrentTab) {
-                const noFav = appLanguageData[currentAppLang].emptyFav;
-                if (currentTab === "photos" && galleryContainer) galleryContainer.innerHTML = noFav;
-                if (currentTab === "videos" && reelsContainer) reelsContainer.innerHTML = noFav;
-                if (currentTab === "text" && txtContainer) txtContainer.innerHTML = noFav;
-            }
+            const noFav = appLanguageData[currentAppLang].emptyFav;
+            if (currentTab === "photos" && galleryContainer) galleryContainer.innerHTML = noFav;
+            if (currentTab === "videos" && reelsContainer) reelsContainer.innerHTML = noFav;
+            if (currentTab === "text" && txtContainer) txtContainer.innerHTML = noFav;
             return;
         }
 
         if (currentTab === "photos") {
-            loadPhotos(1, currentCategory);
+            loadPhotosFromCloudinary(currentCategory);
         } else if (currentTab === "videos") {
-            loadAllCategoryVideos(1, currentCategory);
+            loadVideosFromCloudinary(currentCategory);
         } else if (currentTab === "text") {
-            loadTextStatus(currentCategory, 0, 0);
+            loadTextStatus(currentCategory);
         }
     }
 
-    // Category buttons click
-    document.querySelectorAll(".btn-category").forEach(btn => {
+    function handleLike(itemId, buttonElement) {
+        let favoriteItems = JSON.parse(localStorage.getItem("bds_favorites")) || [];
+        if (favoriteItems.includes(itemId)) {
+            favoriteItems = favoriteItems.filter(id => id !== itemId);
+            buttonElement.classList.remove("liked");
+            buttonElement.innerHTML = "🤍";
+        } else {
+            favoriteItems.push(itemId);
+            buttonElement.classList.add("liked");
+            buttonElement.innerHTML = "❤️";
+        }
+        localStorage.setItem("bds_favorites", JSON.stringify(favoriteItems));
+    }
+
+    // 🔘 Category Buttons Click
+    document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
         btn.addEventListener("click", e => {
-            currentCategory = e.target.getAttribute("data-cat") || e.target.id.replace("btn", "").toLowerCase();
+            const btnId = e.currentTarget.id.toLowerCase();
+            
+            if (btnId.includes("love")) {
+                currentCategory = "love";
+            } else if (btnId.includes("sad")) {
+                currentCategory = "sad";
+            } else if (btnId.includes("motivation")) {
+                currentCategory = "motivation";
+            } else if (btnId.includes("fav")) {
+                currentCategory = "favorites";
+            } else {
+                currentCategory = e.currentTarget.getAttribute("data-cat") || "love";
+            }
+            
             refreshContent();
         });
     });
 
-    // Initial setup calls
+    // Setup Init
     setupInfiniteScrollLoop();
     toggleLanguage(currentAppLang);
     switchTab(currentTab);
-
-    // ❤️ Common handleLike helper
-    function handleLike(itemId, buttonElement) {
-        let favoriteItems = JSON.parse(localStorage.getItem("bds_favorites")) || [];
-
-        if (favoriteItems.includes(itemId)) {
-            favoriteItems = favoriteItems.filter(id => id !== itemId);
-            buttonElement.classList.remove("liked");
-        } else {
-            favoriteItems.push(itemId);
-            buttonElement.classList.add("liked");
-        }
-        localStorage.setItem("bds_favorites", JSON.stringify(favoriteItems));
-    }
-}); // DOMContentLoaded का बंद ब्रैकेट
-
-// 📡 इंटरनेट कनेक्शन अलर्ट
-window.addEventListener('offline', () => {
-    alert("अरे! इंटरनेट कनेक्शन चेक करें।");
 });
 
-window.addEventListener('online', () => {
-    alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।");
-});
+// 📡 ऑनलाइन / ऑफलाइन अलर्ट
+window.addEventListener('offline', () => alert("अरे! इंटरनेट कनेक्शन चेक करें।"));
+window.addEventListener('online', () => alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।"));
 
 // 🚀 ग्लोबल शेयर फंक्शन
 async function shareContent(title, text, url = null) {
-    const shareData = {
-        title: title,
-        text: text,
-        url: url
-    };
-
+    const shareData = { title, text, url };
     if (navigator.share) {
-        try {
-            await navigator.share(shareData);
-        } catch (err) {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + (url ? " " + url : ""))}`, "_blank");
-        }
+        try { await navigator.share(shareData); } 
+        catch (err) { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + (url ? " " + url : ""))}`, "_blank"); }
     } else {
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + (url ? " " + url : ""))}`, "_blank");
     }
