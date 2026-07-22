@@ -136,14 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (appShareBtn) {
-        appShareBtn.addEventListener("click", () => {
-            const appUrl = window.location.origin + window.location.pathname;
-            let shareMessage = currentAppLang === "gujarati" ? "શાનદાર સ્ટેટસ માટે જુઓ Bhojani Digital Seva એપ! 👇" : "शानदार स्टेटस के लिए देखें Bhojani Digital Seva ऐप! 👇";
-            shareContent("Bhojani Digital Seva", shareMessage, appUrl);
-        });
-    }
-
     window.addEventListener("popstate", () => {
         if (document.body.classList.contains("fullscreen-active")) switchTab(currentTab);
         if (lightboxInstance) lightboxInstance.close();
@@ -845,4 +837,25 @@ window.addEventListener('online', () => alert("वापस ऑनलाइन! 
         } else {
             window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
         }
+    }// 📲 हेडर वाले "🔗 ऐप शेयर" बटन का परफेक्ट कोड
+document.addEventListener("DOMContentLoaded", () => {
+    const topHeaderShareBtn = document.getElementById("appShareBtn") || document.getElementById("app-share-btn");
+
+    if (topHeaderShareBtn) {
+        topHeaderShareBtn.onclick = (e) => {
+            e.preventDefault();
+
+            // 💡 भाषा का सेफ चेक (गुजराती या हिंदी)
+            let userLang = (typeof currentAppLang !== "undefined") ? currentAppLang : "hindi";
+
+            let shareMessage = userLang === "gujarati" 
+                ? "શાનદાર સ્ટેટસ માટે જુઓ Bhojani Digital Seva એપ! 👇" 
+                : "शानदार स्टेटस के लिए देखें Bhojani Digital Seva ऐप! 👇";
+
+            // 📤 ऑल-इन-वन शेयर फंक्शन को कॉल करें
+            if (typeof shareMediaContent === "function") {
+                shareMediaContent('text', shareMessage);
+            }
+        };
     }
+});
