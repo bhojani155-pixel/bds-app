@@ -773,71 +773,89 @@ window.addEventListener('offline', () => alert("अरे! इंटरनेट
 window.addEventListener('online', () => alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।"));
 
 // 📤 ऑल-इन-वन स्मार्ट शेयर फंक्शन (ब्रांड नाम + मीडिया फाइल + लिंक)
-    async function shareMediaContent(type, mediaUrlOrText) {
-        const appUrl = window.location.origin + window.location.pathname; // आपकी ऐप का लिंक
+async function shareMediaContent(type, mediaUrlOrText) {
+    const appUrl = window.location.origin + window.location.pathname; // आपकी ऐप का लिंक
+    
+    // 💡 सेफ लैंग्वेज चेक
+    let userLang = "hindi";
+    if (typeof currentAppLang !== "undefined") {
+        userLang = currentAppLang;
+    } else if (typeof currentLang !== "undefined") {
+        userLang = currentLang;
+    }
+
+    // 🏷️ ब्रांड नाम और संदेश
+    const appTitle = "Bhojani Daily Status";
+    let shareMsg = userLang === "gujarati" 
+        ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" 
+        : "ऐसे और शानदार स्टेटस देखने के लिए ऐप देखें:";
+
+    // ✨ सुंदर फ़ॉर्मेट वाला कैप्शन (व्हाट्सऐप पर बोल्ड दिखेगा)
+    const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${appUrl}`;
+
+    // 📝 1. अगर केवल TEXT / ऐप शेयर करना है
+    if (type === 'text') {
+        const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
         
-        // 💡 सेफ लैंग्वेज चेक
-        let userLang = "hindi";
-        if (typeof currentAppLang !== "undefined") {
-            userLang = currentAppLang;
-        } else if (typeof currentLang !== "undefined") {
-            userLang = currentLang;
-        }
-
-        // 🏷️ ब्रांड नाम और संदेश
-        const appTitle = "Bhojani Daily Status"; // आप चाहें तो इसे "Bhojani Digital Seva" भी कर सकते हैं
-        let shareMsg = userLang === "gujarati" 
-            ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" 
-            : "ऐसे और शानदार स्टेटस देखने के लिए ऐप देखें:";
-
-        // ✨ सुंदर फ़ॉर्मेट वाला कैप्शन (व्हाट्सऐप पर बोल्ड दिखेगा)
-        const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${appUrl}`;
-
-        // 📝 1. अगर केवल TEXT शेयर करना है
-        if (type === 'text') {
-            const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title: appTitle, text: fullText });
-                } catch (err) { console.log("Share cancelled", err); }
-            } else {
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
-            }
-            return;
-        }
-
-        // 📸 2. अगर PHOTO या VIDEO शेयर करना है
         if (navigator.share) {
             try {
-                const response = await fetch(mediaUrlOrText);
-                const blob = await response.blob();
-                
-                const ext = type === 'photo' ? 'jpg' : 'mp4';
-                const mimeType = type === 'photo' ? 'image/jpeg' : 'video/mp4';
-                const fileName = `bds_status_${Date.now()}.${ext}`;
-
-                const file = new File([blob], fileName, { type: mimeType });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: appTitle,
-                        text: captionText // 👈 अब फोटो/वीडियो के नीचे ब्रांड नाम भी जाएगा
-                    });
-                } else {
-                    await navigator.share({
-                        title: appTitle,
-                        text: `${captionText}\n\n${mediaUrlOrText}`
-                    });
-                }
+                // 📱 मोबाइल Native Share Dialog
+                await navigator.share({
+                    title: appTitle,
+                    text: fullText,
+                    url: appUrl // 💡 मोबाइल में लिंक प्रीव्यू बेहतर दिखाने के लिए
+                });
             } catch (err) {
-                console.log("File share error, using fallback:", err);
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
+                console.log("Share cancelled or failed:", err);
+                // अगर यूज़र ने खुद शेयर कैंसिल नहीं किया और कोई एरर आया, तो WhatsApp पर खोलें
+                if (err.name !== 'AbortError') {
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+                }
             }
         } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
+            // 🌐 Desktop / Non-supported Browser Fallback
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
         }
-    }// 📲 हेडर वाले "🔗 ऐप शेयर" बटन का परफेक्ट कोड
+        return;
+    }
+
+    // 📸 2. अगर PHOTO या VIDEO शेयर करना है
+    if (navigator.share) {
+        try {
+            const response = await fetch(mediaUrlOrText);
+            const blob = await response.blob();
+            
+            const ext = type === 'photo' ? 'jpg' : 'mp4';
+            const mimeType = type === 'photo' ? 'image/jpeg' : 'video/mp4';
+            const fileName = `bds_status_${Date.now()}.${ext}`;
+
+            const file = new File([blob], fileName, { type: mimeType });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: appTitle,
+                    text: captionText // 👈 फोटो/वीडियो के नीचे ब्रांड नाम
+                });
+            } else {
+                await navigator.share({
+                    title: appTitle,
+                    text: `${captionText}\n\n${mediaUrlOrText}`,
+                    url: appUrl
+                });
+            }
+        } catch (err) {
+            console.log("File share error, using fallback:", err);
+            if (err.name !== 'AbortError') {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
+            }
+        }
+    } else {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
+    }
+}
+
+// 📲 हेडर वाले "🔗 ऐप शेयर" बटन का परफेक्ट कोड
 document.addEventListener("DOMContentLoaded", () => {
     const topHeaderShareBtn = document.getElementById("appShareBtn") || document.getElementById("app-share-btn");
 
@@ -846,7 +864,12 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
 
             // 💡 भाषा का सेफ चेक (गुजराती या हिंदी)
-            let userLang = (typeof currentAppLang !== "undefined") ? currentAppLang : "hindi";
+            let userLang = "hindi";
+            if (typeof currentAppLang !== "undefined") {
+                userLang = currentAppLang;
+            } else if (typeof currentLang !== "undefined") {
+                userLang = currentLang;
+            }
 
             let shareMessage = userLang === "gujarati" 
                 ? "શાનદાર સ્ટેટસ માટે જુઓ Bhojani Digital Seva એપ! 👇" 
