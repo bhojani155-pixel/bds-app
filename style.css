@@ -65,7 +65,7 @@ body {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    background: #111;
+    background: #1d1d1df5;
     padding: 8px 5px;
     position: sticky;
     top: 50px;
@@ -314,27 +314,27 @@ body {
 .text-status-card {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(198, 32, 193, 0.3);
     padding: 20px;
     margin: 15px;
     border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(97, 170, 210, 0.1);
     position: relative;
 }
 
 .text-status-card p {
-    font-size: 16px;
+    font-size: 18px;
     margin-bottom: 40px;
 }
 
 body.dark-mode {
     background: linear-gradient(135deg, #121212, #1f1f1f) !important;
-    color: #ffffff !important;
+    color: #ffffffd5 !important;
 }
 
 body.dark-mode .text-status-card {
-    background: rgba(0, 0, 0, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(35, 34, 34, 0.6) !important;
+    border: 3px solid rgba(162, 187, 193, 0.349) !important;
 }
 
 .sl-overlay {
@@ -572,24 +572,6 @@ body.dark-mode .lang-toggle-btn.active {
 
 .heart-animated {
     animation: heartPop 0.8s ease-in-out;
-}/* 📥 लोड मोर बटन का स्टाइल */
-.load-more-btn {
-    display: block;
-    margin: 0;
-    padding: 10px 25px;
-    font-size: 16px;
-    background-color: #ff2b55; /* आपकी ऐप का थीम कलर */
-    color: white;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-weight: bold;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: background 0.3s;
-}
-
-.load-more-btn:hover {
-    background-color: #e0244b;
 }/* right side wrapper */
 .load-more-wrapper {
     display: flex;
@@ -597,7 +579,7 @@ body.dark-mode .lang-toggle-btn.active {
     margin-top: 10px;
 }.photo-sentinel {
     height: 20px;
-    width: 100%;
+    width: 99%;
     opacity: 0;
 }
 

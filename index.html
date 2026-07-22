@@ -253,11 +253,34 @@
                 this.classList.add('active');
             });
         });
-    </script><script>
+    </script>
+    <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('Service Worker Registered!'))
-      .catch((err) => console.log('Service Worker Error:', err));
+    // 1. सर्विस वर्कर रजिस्टर करें
+    navigator.serviceWorker.register('./sw.js').then((registration) => {
+      
+      // बैकग्राउंड में चेक करेगा कि नया अपडेट आया है या नहीं
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // नया अपडेट आते ही रीलोड हो जाएगा
+              window.location.reload();
+            }
+          };
+        }
+      };
+    });
+
+    // 2. जब नया सर्विस वर्कर एक्टिवेट होगा तो पेज ऑटो-रिफ्रेश करेगा
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }
 </script>
 </body>
