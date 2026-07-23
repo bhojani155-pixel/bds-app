@@ -2,21 +2,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cloudName = "gkbhojani"; // Cloudinary Cloud Name
 
-    // 🌐 भाषा डिक्शनरी
+  // 🌐 भाषा डिक्शनरी
     const appLanguageData = {
         hindi: {
-            btnFavoritesText: "❤️ पसंदीदा", btnLoveText: "❤️ लव", btnSadText: "💔 सैड", btnMotivationText: "🚀 मोटिवेशन",
-            btnFavoritesPhoto: "❤️ पसंदीदा", btnLovePhoto: "❤️ लव", btnSadPhoto: "💔 सैड", btnMotivationPhoto: "🚀 मोटिवेशन",
-            btnFavoritesVideo: "❤️ पसंदीदा", btnLoveVideo: "❤️ लव", btnSadVideo: "💔 सैड", btnMotivationVideo: "🚀 मोटिवेशन",
+            btnFavoritesText: "❤️ पसंदीदा", btnLoveText: "❤️ लव", btnSadText: "💔 सैड", btnMotivationText: "🚀 मोटिवेशन", btnBhaktiText: "🙏 भक्ति",
+            btnFavoritesPhoto: "❤️ पसंदीदा", btnLovePhoto: "❤️ लव", btnSadPhoto: "💔 सैड", btnMotivationPhoto: "🚀 मोटिवेशन", btnBhaktiPhoto: "🙏 भक्ति",
+            btnFavoritesVideo: "❤️ पसंदीदा", btnLoveVideo: "❤️ लव", btnSadVideo: "💔 सैड", btnMotivationVideo: "🚀 मोटिवेशन", btnBhaktiVideo: "🙏 भक्ति",
             tabText: "📝 टेक्स्ट", tabPhotos: "📸 फोटो", tabVideos: "🎥 रील्स",
             emptyFav: "<div style='color:#aaa; text-align:center; padding:50px; grid-column: span 4;'>आपने अभी तक कुछ भी लाइक नहीं किया है! ❤️</div>",
             noPhoto: "<div style='color:#aaa; text-align:center; padding:50px; grid-column: span 4;'>कोई फोटो नहीं मिली!</div>",
             noVideo: "<div style='color:#aaa; text-align:center; padding:50px; grid-column: span 4;'>कोई वीडियो नहीं मिला!</div>"
         },
         gujarati: {
-            btnFavoritesText: "❤️ મનપસંદ", btnLoveText: "❤️ પ્રેમ", btnSadText: "💔 ઉદાસ", btnMotivationText: "🚀 પ્રેરણાત્મક",
-            btnFavoritesPhoto: "❤️ મનપસંદ", btnLovePhoto: "❤️ પ્રેમ", btnSadPhoto: "💔 ઉદાસ", btnMotivationPhoto: "🚀 પ્રેરણાત્મક",
-            btnFavoritesVideo: "❤️ મનપસંદ", btnLoveVideo: "❤️ પ્રેમ", btnSadVideo: "💔 ઉદાસ", btnMotivationVideo: "🚀 પ્રેરણાત્મક",
+            btnFavoritesText: "❤️ મનપસંદ", btnLoveText: "❤️ પ્રેમ", btnSadText: "💔 ઉદાસ", btnMotivationText: "🚀 પ્રેરણાત્મક", btnBhaktiText: "🙏 ભક્તિ",
+            btnFavoritesPhoto: "❤️ મનપસંદ", btnLovePhoto: "❤️ પ્રેમ", btnSadPhoto: "💔 ઉદાસ", btnMotivationPhoto: "🚀 પ્રેરણાત્મક", btnBhaktiPhoto: "🙏 ભક્તિ",
+            btnFavoritesVideo: "❤️ મનપસંદ", btnLoveVideo: "❤️ પ્રેમ", btnSadVideo: "💔 ઉદાસ", btnMotivationVideo: "🚀 પ્રેરણાત્મક", btnBhaktiVideo: "🙏 ભક્તિ",
             tabText: "📝 લખાણ", tabPhotos: "📸 ફોટો", tabVideos: "🎥 રીલ્સ",
             emptyFav: "<div style='color:#aaa; text-align:center; padding:50px; grid-column: span 4;'>તમે હજુ સુધી કંઈપણ લાઈક કર્યું નથી! ❤️</div>",
             noPhoto: "<div style='color:#aaa; text-align:center; padding:50px; grid-column: span 4;'>કોઈ ફોટો મળ્યો નથી!</div>",
@@ -82,10 +82,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function getCategoryLabel(category, lang) {
+   function getCategoryLabel(category, lang) {
         const categoryLabels = {
-            hindi: { love: "लव / शायरी", sad: "सैड / शायरी", motivation: "मोटिवेशन / सुविचार", favorites: "पसंदीदा स्टेटस" },
-            gujarati: { love: "પ્રેમ / શાયરી", sad: "ઉદાસ / શાયરી", motivation: "પ્રેરણાત્મક / સુવાક્ય", favorites: "મનપસંદ સ્ટેટસ" }
+            hindi: { 
+                love: "लव / शायरी", 
+                sad: "सैड / शायरी", 
+                motivation: "मोटिवेशन / सुविचार", 
+                bhakti: "भक्ति / आराधना", 
+                favorites: "पसंदीदा स्टेटस" 
+            },
+            gujarati: { 
+                love: "પ્રેમ / શાયરી", 
+                sad: "ઉદાસ / શાયરી", 
+                motivation: "પ્રેરણાત્મક / સુવાક્ય", 
+                bhakti: "ભક્તિ / આરાધના", 
+                favorites: "મનપસંદ સ્ટેટસ" 
+            }
         };
         return (categoryLabels[lang] && categoryLabels[lang][category]) || category;
     }
