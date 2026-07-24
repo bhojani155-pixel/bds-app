@@ -390,47 +390,71 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-  // 🛠️ कस्टम लाइटबॉक्स फंक्शंस (इनलाइन स्टाइल - बिना CSS फाइल के 100% फुलस्क्रीन)
-    function openCustomLightbox(index) {
-        currentLightboxIndex = index;
+  // 🛠️ कस्टम लाइटबॉक्स फंक्शंस (इनलाइन स्टाइल + कलरफुल बटन्स + टच स्वाइप)
+function openCustomLightbox(index) {
+    currentLightboxIndex = index;
+    
+    let modal = document.getElementById("custom-lightbox-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "custom-lightbox-modal";
         
-        let modal = document.getElementById("custom-lightbox-modal");
-        if (!modal) {
-            modal = document.createElement("div");
-            modal.id = "custom-lightbox-modal";
+        // 💡 फुलस्क्रीन पॉप-अप (ब्लर बैकग्राउंड)
+        modal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.92) !important;
+            backdrop-filter: blur(10px) !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+        `;
+
+        // 🎨 बड़े और कलरफुल बटन्स + फोटो लेआउट
+        modal.innerHTML = `
+            <button id="lb-prev-btn" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; user-select: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❮</button>
             
-            // 💡 फुलस्क्रीन पॉप-अप की पक्की गारंटी (डायरेक्ट JS स्टाइल)
-            modal.style.cssText = `
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: rgba(0, 0, 0, 0.95) !important;
-                z-index: 999999 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: center !important;
-                align-items: center !important;
-                box-sizing: border-box !important;
-            `;
+            <img id="custom-lightbox-img" src="" alt="Photo" style="max-width: 95%; max-height: 78vh; object-fit: contain; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6);">
+            
+            <button id="lb-next-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; user-select: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❯</button>
+            
+            <div id="lightbox-actions" style="margin-top: 18px; display: flex; gap: 12px; z-index: 1000000;"></div>
+        `;
+        document.body.appendChild(modal);
 
-            modal.innerHTML = `
-                <button id="lb-prev-btn" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.2); color: #fff; border: none; font-size: 26px; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; z-index: 1000000; user-select: none; display: flex; align-items: center; justify-content: center;">❮</button>
-                <img id="custom-lightbox-img" src="" alt="Photo" style="max-width: 90%; max-height: 75vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-                <button id="lb-next-btn" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.2); color: #fff; border: none; font-size: 26px; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; z-index: 1000000; user-select: none; display: flex; align-items: center; justify-content: center;">❯</button>
-                <div id="lightbox-actions" style="margin-top: 15px; display: flex; gap: 12px; z-index: 1000000;"></div>
-            `;
-            document.body.appendChild(modal);
+        modal.querySelector("#lb-prev-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(-1); };
+        modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(1); };
 
-            modal.querySelector("#lb-prev-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(-1); };
-            modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(1); };
-        }
+        // 👈👉 टच स्वाइप (Touch Swipe) लॉजिक
+        let touchStartX = 0;
+        let touchEndX = 0;
 
-        modal.style.display = "flex";
-        history.pushState({ fullscreen: true }, "");
-        updateCustomLightboxView();
+        modal.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+
+        modal.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].clientX;
+            const distance = touchStartX - touchEndX;
+
+            if (distance > 40) {
+                changeLightboxPhoto(1);  // बाएँ स्वाइप -> अगला फोटो
+            } else if (distance < -40) {
+                changeLightboxPhoto(-1); // दाएँ स्वाइप -> पिछला फोटो
+            }
+        }, { passive: true });
     }
+
+    modal.style.display = "flex";
+    history.pushState({ fullscreen: true }, "");
+    updateCustomLightboxView();
+}
 
     function changeLightboxPhoto(direction) {
         const nextIndex = currentLightboxIndex + direction;
@@ -462,13 +486,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const isLiked = isFavorite(photoId);
 
         actionsEl.innerHTML = `
-            <button id="lb-like-btn" style="padding: 10px 18px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; background:${isLiked ? "#fff" : "rgba(255,255,255,0.2)"}; color:${isLiked ? "#ff2b55" : "#fff"};">
-                ${isLiked ? "❤️ लाइक" : "🤍 लाइक"}
-            </button>
-            <button id="lb-share-btn" style="padding: 10px 18px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; background:rgba(255,255,255,0.2); color:#fff;">💬 शेयर</button>
-            <button id="lb-close-btn" style="padding: 10px 18px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; background:rgba(255,255,255,0.2); color:#fff;">↩️ बैक</button>
-        `;
-
+    <button id="lb-like-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: ${isLiked ? '#d63353' : 'rgba(173, 211, 211, 0.2)'}; color: #fff; backdrop-filter: blur(10px); box-shadow: 0 4px 5px rgba(0,0,0,0.3);">
+        ${isLiked ? "❤️ लाइक" : "🤍 लाइक"}
+    </button>
+    <button id="lb-share-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">💬 शेयर</button>
+    <button id="lb-close-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #8a2387, #d94e96f1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">↩️ बैक</button>
+`;
        document.getElementById("lb-like-btn").onclick = () => {
             const added = toggleFavoriteItem({ id: photoId, url: imgUrl, type: 'photo' });
             updateCustomLightboxView();
