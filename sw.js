@@ -2,12 +2,15 @@ const CACHE_NAME = 'bhojani-status-v1.2';
 
 // 1. सभी ज़रूरी फाइलों के सही रिलेटिव पाथ (./)
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./script.js",
-  "./hindi-text.js",
-  "./gujarati-text.js"
+    "./",
+    "./index.html",
+    "./style.css",
+    "./script.js",
+    "./hindi-text.js",
+    "./gujarati-text.js",
+    "./manifest.json",
+    "./icon1.png",
+    "./icon2.png"
 ];
 
 // 2. फ़ाइलों को कैश (Cache) में सेव करना

@@ -338,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
             watermark.innerText = "BDS";
 
             aTag.appendChild(img);
-            itemDiv.appendChild(aTag);
+            itemDiv.appendChild(aTag); 
             itemDiv.appendChild(watermark);
             galleryContainer.appendChild(itemDiv);
         });
@@ -765,17 +765,18 @@ document.addEventListener("DOMContentLoaded", () => {
         else if (currentTab === "videos") loadVideosFromCloudinary(currentCategory);
         else if (currentTab === "text") loadTextStatus(currentCategory);
     }
-    document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const btnId = e.currentTarget.id.toLowerCase();
-            if (btnId.includes("love")) currentCategory = "love";
-            else if (btnId.includes("sad")) currentCategory = "sad";
-            else if (btnId.includes("motivation")) currentCategory = "motivation";
-            else if (btnId.includes("fav")) currentCategory = "favorites";
-            else currentCategory = e.currentTarget.getAttribute("data-cat") || "love";
-            refreshContent();
-        });
+   document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
+    btn.addEventListener("click", e => {
+        const btnId = e.currentTarget.id.toLowerCase();
+        if (btnId.includes("love")) currentCategory = "love";
+        else if (btnId.includes("sad")) currentCategory = "sad";
+        else if (btnId.includes("motivation")) currentCategory = "motivation";
+        else if (btnId.includes("fav")) currentCategory = "favorites";
+        else if (btnId.includes("bhakti")) currentCategory = "bhakti"; // यह लाइन जोड़ दें
+        else currentCategory = e.currentTarget.getAttribute("data-cat") || "love";
+        refreshContent();
     });
+});
 
     toggleLanguage(currentAppLang);
     switchTab(currentTab);
@@ -804,7 +805,7 @@ function getAppLanguage() {
     return "hindi"; // डिफ़ॉल्ट हिंदी
 }
 
-// 📤 2. ऑल-इन-वन स्मार्ट शेयर फंक्शन
+// 📤 2. ऑल-इन-वन स्मार्ट शेयर फंक्शन (FIXED)
 async function shareMediaContent(type, mediaUrlOrText) {
     const appUrl = window.location.origin + window.location.pathname; // आपकी ऐप का लिंक
     const userLang = getAppLanguage(); // 👈 यहाँ से ऑटोमेटिक सही भाषा मिलेगी
@@ -826,8 +827,8 @@ async function shareMediaContent(type, mediaUrlOrText) {
             try {
                 await navigator.share({
                     title: appTitle,
-                    text: fullText,
-                    url: appUrl
+                    text: fullText
+                    // ❌ url: appUrl यहाँ से हटा दिया गया है ताकि 2 बार लिंक न आए!
                 });
             } catch (err) {
                 if (err.name !== 'AbortError') {
@@ -839,7 +840,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
         }
         return;
     }
-
     // 📸 PHOTO या VIDEO Share
     if (navigator.share) {
         try {
@@ -896,3 +896,29 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 });
+// Service Worker Registration and Auto-Update Check
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((registration) => {
+            console.log('ServiceWorker registered: ', registration.scope);
+
+            // जब भी कोई नया अपडेट उपलब्ध हो
+            registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            // नया अपडेट मिल गया है, पेज को ऑटोमैटिक रीफ्रेश कर सकते हैं या नोटिफिकेशन दिखा सकते हैं
+                            console.log('New content is available; please refresh.');
+                            if (confirm('नया अपडेट उपलब्ध है! ऐप को अपडेट करने के लिए OK दबाएं।')) {
+                                window.location.reload();
+                            }
+                        }
+                    }
+                };
+            };
+        }).catch((error) => {
+            console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+}
