@@ -1,0 +1,9 @@
+# 1. भारी वीडियो और फोटो फोल्डर्स (ताकि Upload न हो)
+images/
+videos/
+split_clips/
+split_clips_gujarati/
+
+# 2. API Keys और Secrets वाली फाइलें (सुरक्षा के लिए)
+upload_photos.py
+upload_videos.py
