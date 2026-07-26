@@ -292,7 +292,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!response.ok) throw new Error("Cloudinary Error");
             const data = await response.json();
             
-            cloudResources = data.resources || [];
+            // डेटा लोड होते ही डेली शफल लागू करें
+cloudResources = shuffleArrayDaily(data.resources || []);
             loadIndex = 0;
             galleryContainer.innerHTML = '';
 
@@ -530,7 +531,8 @@ function openCustomLightbox(index) {
             if (!response.ok) throw new Error("Cloudinary Error");
 
             const data = await response.json();
-            cloudResources = data.resources || [];
+           // डेटा लोड होते ही डेली शफल लागू करें
+cloudResources = shuffleArrayDaily(data.resources || []);
             loadIndex = 0;
             reelsContainer.innerHTML = '';
 
@@ -944,4 +946,33 @@ if ('serviceWorker' in navigator) {
             console.log('ServiceWorker registration failed: ', error);
         });
     });
+}// 🗓️ 1. आज की तारीख से Seed Number बनाना
+function getDailySeed() {
+    const today = new Date();
+    // YYYYMMDD फॉर्मेट (उदा. 20260726)
+    return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+}
+
+// 🎲 2. Seeded Random Number Generator (हर तारीख के लिए फिक्स रैंडम नंबर)
+function seededRandom(seed) {
+    return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+// 🔀 3. डेली शफल फंक्शन (रोज़ रात 12 बजे ऑर्डर बदलेगा)
+function shuffleArrayDaily(array) {
+    if (!array || array.length === 0) return [];
+    const seed = getDailySeed();
+    const random = seededRandom(seed);
+    const shuffled = [...array]; // ओरिजिनल एरे को छुए बिना कॉपी बनाएं
+    
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
 }
