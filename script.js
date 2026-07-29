@@ -1,8 +1,293 @@
+// ==========================================
+// 🌐 1. ग्लोबल हेल्पर्स एवं भाषा फंक्शंस
+// ==========================================
+
+// भाषा पता करने का सेफ फंक्शन
+function getAppLanguage() {
+    const gujBtn = document.getElementById("btnLangGujarati");
+    if (gujBtn && gujBtn.classList.contains("active")) return "gujarati";
+
+    if (typeof window.currentAppLang !== "undefined" && window.currentAppLang) return window.currentAppLang;
+
+    const savedLang = localStorage.getItem("user_app_lang") || localStorage.getItem("appLang");
+    if (savedLang) return savedLang.toLowerCase();
+
+    return "hindi";
+}
+window.getAppLanguage = getAppLanguage;
+
+// 🗓️ तारीख से सीड बनाना और डेली शफल
+function getDailySeed() {
+    const today = new Date();
+    return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+}
+
+function seededRandom(seed) {
+    return function() {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function shuffleArrayDaily(array) {
+    if (!array || array.length === 0) return [];
+    const seed = getDailySeed();
+    const random = seededRandom(seed);
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+// ==========================================
+// 👤 2. प्रोफाइल सेटिंग्स एवं लाइव प्रीव्यू फ़ंक्शंस
+// ==========================================
+
+function previewPhoto(event) {
+    const file = event ? event.target.files[0] : null;
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const img = document.getElementById('avatarImage');
+            if (img) img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+window.previewPhoto = previewPhoto;
+
+function saveUserProfile() {
+    const nameEl = document.getElementById('inputName');
+    const phoneEl = document.getElementById('inputPhone');
+    const taglineEl = document.getElementById('inputTagline');
+    const avatarEl = document.getElementById('avatarImage');
+
+    const name = nameEl ? nameEl.value : '';
+    const phone = phoneEl ? phoneEl.value : '';
+    const tagline = taglineEl ? taglineEl.value : '';
+    const photo = avatarEl ? avatarEl.src : '';
+
+    if (!name.trim()) {
+        alert("कृपया अपना नाम लिखें / કૃપા કરીને નામ લખો");
+        return;
+    }
+
+    const profileData = { name, phone, tagline, photo };
+    localStorage.setItem('bds_user_profile', JSON.stringify(profileData));
+
+    alert("✅ प्रोफाइल सफलतापूर्वक सेव हो गई!");
+    closeProfileModal();
+}
+window.saveUserProfile = saveUserProfile;
+
+function loadUserProfile() {
+    const saved = localStorage.getItem('bds_user_profile');
+    if (saved) {
+        try {
+            const profile = JSON.parse(saved);
+            if (document.getElementById('inputName')) document.getElementById('inputName').value = profile.name || '';
+            if (document.getElementById('inputPhone')) document.getElementById('inputPhone').value = profile.phone || '';
+            if (document.getElementById('inputTagline')) document.getElementById('inputTagline').value = profile.tagline || '';
+            if (profile.photo && document.getElementById('avatarImage')) {
+                document.getElementById('avatarImage').src = profile.photo;
+            }
+        } catch (e) { console.error("Error loading profile", e); }
+    }
+}
+
+function updateModalLanguage() {
+    const userLang = getAppLanguage();
+    const isGujarati = userLang === 'gujarati';
+
+    const setTxt = (id, txt) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = txt;
+    };
+
+    if (isGujarati) {
+        setTxt('modalTitle', 'તમારી પ્રોફાઇલ સેટ કરો 👤');
+        setTxt('modalSubTitle', 'આ માહિતી તમારા દરેક સ્ટેટસ પર દેખાશે');
+        setTxt('uploadBadgeBtn', '📷 ફોટો પસંદ કરો');
+        setTxt('lblInputName', 'પૂરું નામ');
+        setTxt('lblInputPhone', 'મોબાઇલ નંબર');
+        setTxt('lblInputTagline', 'હોદ્દો / ઓળખ (Designation)');
+        setTxt('saveProfileBtn', 'સેવ કરો 🚀');
+    } else {
+        setTxt('modalTitle', 'आपकी प्रोफाइल सेट करें 👤');
+        setTxt('modalSubTitle', 'यह जानकारी आपके हर स्टेटस पर दिखाई देगी');
+        setTxt('uploadBadgeBtn', '📷 फोटो चुनें');
+        setTxt('lblInputName', 'पूरा नाम');
+        setTxt('lblInputPhone', 'मोबाइल नंबर');
+        setTxt('lblInputTagline', 'पद / पहचान (Designation)');
+        setTxt('saveProfileBtn', 'सेव करें 🚀');
+    }
+}
+
+function openProfileModal() {
+    updateModalLanguage();
+    loadUserProfile();
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.add('active');
+}
+window.openProfileModal = openProfileModal;
+
+function closeProfileModal() {
+    const modal = document.getElementById('profileModal');
+    if (modal) modal.classList.remove('active');
+}
+window.closeProfileModal = closeProfileModal;
+
+// ==========================================
+// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - NO MOBILE NUMBER)
+// ==========================================
+
+function createProfileStitchedBlob(imageUrl, profile) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = imageUrl;
+
+        img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // 1. मुख्य फोटो ड्रा करें
+            ctx.drawImage(img, 0, 0);
+
+            // 2. प्रोफाइल स्ट्रिप (यदि यूजर का नाम सेव है)
+            if (profile && profile.name) {
+                const footerHeight = Math.floor(canvas.height * 0.12);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
+                ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
+
+                let textXOffset = footerHeight * 0.3;
+
+                if (profile.photo) {
+                    try {
+                        const avatarImg = new Image();
+                        avatarImg.crossOrigin = 'anonymous';
+                        avatarImg.src = profile.photo;
+
+                        await new Promise(res => { avatarImg.onload = res; avatarImg.onerror = res; });
+
+                        if (avatarImg.complete && avatarImg.naturalWidth > 0) {
+                            const avatarSize = footerHeight * 0.75;
+                            const avatarX = footerHeight * 0.2;
+                            const avatarY = canvas.height - footerHeight + (footerHeight - avatarSize) / 2;
+
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                            ctx.closePath();
+                            ctx.clip();
+                            ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+                            ctx.restore();
+
+                            ctx.lineWidth = Math.max(2, Math.floor(footerHeight * 0.03));
+                            ctx.strokeStyle = '#00a2ff';
+                            ctx.beginPath();
+                            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                            ctx.stroke();
+
+                            textXOffset = avatarX + avatarSize + footerHeight * 0.25;
+                        }
+                    } catch (e) { console.log('Avatar stitch error:', e); }
+                }
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${Math.floor(footerHeight * 0.30)}px sans-serif`;
+
+                if (profile.tagline) {
+                    ctx.fillText(profile.name, textXOffset, canvas.height - footerHeight * 0.52);
+                    ctx.fillStyle = '#cccccc';
+                    ctx.font = `${Math.floor(footerHeight * 0.22)}px sans-serif`;
+                    ctx.fillText(profile.tagline, textXOffset, canvas.height - footerHeight * 0.22);
+                } else {
+                    ctx.fillText(profile.name, textXOffset, canvas.height - footerHeight * 0.38);
+                }
+            }
+
+            canvas.toBlob(blob => {
+                if (blob) resolve(blob);
+                else reject(new Error('Canvas conversion failed'));
+            }, 'image/jpeg', 0.95);
+        };
+
+        img.onerror = err => reject(err);
+    });
+}
+
+// 📤 स्मार्ट शेयर फ़ंक्शन
+async function shareMediaContent(type, mediaUrlOrText) {
+    const appUrl = window.location.origin + window.location.pathname;
+    const userLang = getAppLanguage();
+
+    const appTitle = "Bhojani Daily Status";
+    let shareMsg = userLang === "gujarati" ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" : "ऐसे और शानदार स्टेटस देखने के लिए ऐप देखें:";
+    const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${appUrl}`;
+
+    if (type === 'text') {
+        const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: appTitle, text: fullText });
+            } catch (err) {
+                if (err.name !== 'AbortError') window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+            }
+        } else {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+        }
+        return;
+    }
+
+    try {
+        let file;
+        const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
+
+        if (type === 'photo') {
+            const savedProfile = localStorage.getItem('bds_user_profile');
+            const profile = savedProfile ? JSON.parse(savedProfile) : null;
+            const imageBlob = await createProfileStitchedBlob(mediaUrlOrText, profile);
+            file = new File([imageBlob], fileName, { type: 'image/jpeg' });
+        } else {
+            const response = await fetch(mediaUrlOrText);
+            const blob = await response.blob();
+            file = new File([blob], fileName, { type: 'video/mp4' });
+        }
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: appTitle, text: captionText });
+        } else {
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(file);
+            downloadLink.download = fileName;
+            downloadLink.click();
+            alert('✅ फोटो आपकी गैलरी में सेव हो गई है!');
+        }
+    } catch (err) {
+        console.error('Sharing Error:', err);
+        if (err.name !== 'AbortError') {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
+        }
+    }
+}
+window.shareMediaContent = shareMediaContent;
+
+// ==========================================
+// 🚀 4. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
+// ==========================================
+
 document.addEventListener("DOMContentLoaded", () => {
+    const cloudName = "gkbhojani";
 
-    const cloudName = "gkbhojani"; // Cloudinary Cloud Name
-
-  // 🌐 भाषा डिक्शनरी
     const appLanguageData = {
         hindi: {
             btnFavoritesText: "❤️ पसंदीदा", btnLoveText: "❤️ लव", btnSadText: "💔 सैड", btnMotivationText: "🚀 मोटिवेशन", btnBhaktiText: "🙏 भक्ति",
@@ -24,10 +309,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.error("SW Error:", err));
-    }
-
     const tabs = { text: document.getElementById("tabText"), photos: document.getElementById("tabPhotos"), videos: document.getElementById("tabVideos") };
     const sections = { text: document.getElementById("textSection"), photos: document.getElementById("photoSection"), videos: document.getElementById("videoSection") };
 
@@ -35,37 +316,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const reelsContainer = document.getElementById("reelsContainer");
     const txtContainer = document.getElementById("textStatusContainer");
     const darkModeBtn = document.getElementById("darkModeBtn");
-    const appShareBtn = document.getElementById("appShareBtn");
 
     let currentAppLang = localStorage.getItem("user_app_lang") || "hindi";
+    window.currentAppLang = currentAppLang;
+
     let currentTab = localStorage.getItem("bds_current_tab") || "videos";
     let currentCategory = "love";
     let videoObserver = null;
-    let lightboxInstance = null;
 
     let cloudResources = [];
     let loadIndex = 0;
     let lazyLoadObserver = null;
 
-    // Text status pagination variables (25 items per load)
     let currentTextSourceList = [];
     let textLoadIndex = 0;
     const textsPerLoad = 25;
+    const photoItemsPerLoad = 25;
+    let currentLightboxIndex = 0;
 
-    // Helper: Get robust favorites storage (object-based to prevent black boxes)
+    const avatarInputEl = document.getElementById('avatarInput');
+    if (avatarInputEl) {
+        avatarInputEl.addEventListener('change', previewPhoto);
+    }
+
     function getFavorites() {
         const favs = JSON.parse(localStorage.getItem("bds_favorites")) || [];
-        return favs.map(item => {
-            if (typeof item === 'string') {
-                return { id: item, url: '', type: 'unknown' };
-            }
-            return item;
-        });
+        return favs.map(item => typeof item === 'string' ? { id: item, url: '', type: 'unknown' } : item);
     }
 
     function isFavorite(itemId) {
-        const favs = getFavorites();
-        return favs.some(fav => fav.id === itemId);
+        return getFavorites().some(fav => fav.id === itemId);
     }
 
     function toggleFavoriteItem(itemObj) {
@@ -82,63 +362,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-   function getCategoryLabel(category, lang) {
+    function getCategoryLabel(category, lang) {
         const categoryLabels = {
-            hindi: { 
-                love: "लव / शायरी", 
-                sad: "सैड / शायरी", 
-                motivation: "मोटिवेशन / सुविचार", 
-                bhakti: "भक्ति / आराधना", 
-                favorites: "पसंदीदा स्टेटस" 
-            },
-            gujarati: { 
-                love: "પ્રેમ / શાયરી", 
-                sad: "ઉદાસ / શાયરી", 
-                motivation: "પ્રેરણાત્મક / સુવાક્ય", 
-                bhakti: "ભક્તિ / આરાધના", 
-                favorites: "મનપસંદ સ્ટેટસ" 
-            }
+            hindi: { love: "लव / शायरी", sad: "सैड / शायरी", motivation: "मोटिवेशन / सुविचार", bhakti: "भक्ति / आराधना", favorites: "पसंदीदा स्टेटस" },
+            gujarati: { love: "પ્રેમ / શાયરી", sad: "ઉદાસ / શાયરી", motivation: "પ્રેરણાત્મક / સુવાક્ય", bhakti: "ભક્તિ / આરાધના", favorites: "મનપસંદ સ્ટેટસ" }
         };
         return (categoryLabels[lang] && categoryLabels[lang][category]) || category;
     }
-
-    // 👤 यूजर प्रोफाइल सेटअप
-    const savedName = localStorage.getItem('bds_user_name');
-    const icon = document.getElementById('user-initial');
-    if(icon) icon.innerText = savedName ? savedName.charAt(0).toUpperCase() : "👤"; 
-
-    window.openProfile = function() {
-        const modal = document.getElementById("profileModal");
-        if (modal) {
-            modal.style.display = "block";
-            const name = localStorage.getItem("bds_user_name");
-            if(name) {
-                document.getElementById("displayName").innerText = "नमस्ते, " + name;
-                document.getElementById("userNameInput").value = name; 
-            }
-        }
-    };
-
-    window.closeProfile = function() {
-        const modal = document.getElementById("profileModal");
-        if (modal) modal.style.display = "none";
-    };
-
-    window.saveName = function() {
-        const nameInput = document.getElementById('userNameInput').value;
-        if (nameInput) {
-            localStorage.setItem('bds_user_name', nameInput);
-            if (icon) icon.innerText = nameInput.charAt(0).toUpperCase();
-            const disp = document.getElementById('displayName');
-            if (disp) disp.innerText = "नमस्ते, " + nameInput;
-            window.closeProfile();
-        }
-    };
-
-    window.onclick = function(event) {
-        const modal = document.getElementById("profileModal");
-        if (event.target == modal) window.closeProfile(); 
-    };
 
     if (localStorage.getItem("appDarkMode") === "enabled") document.body.classList.add("dark-mode");
     if (darkModeBtn) {
@@ -149,19 +379,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.addEventListener("popstate", () => {
+        closeCustomLightbox();
         if (document.body.classList.contains("fullscreen-active")) switchTab(currentTab);
-        if (lightboxInstance) lightboxInstance.close();
     });
 
     window.toggleLanguage = function (lang) {
         currentAppLang = lang;
+        window.currentAppLang = lang;
         localStorage.setItem("user_app_lang", lang);
+
         const btnHindi = document.getElementById("btnLangHindi");
         const btnGujarati = document.getElementById("btnLangGujarati");
-        if (btnHindi) btnHindi.classList.remove("active");
-        if (btnGujarati) btnGujarati.classList.remove("active");
-        if (lang === "hindi" && btnHindi) btnHindi.classList.add("active");
-        else if (lang === "gujarati" && btnGujarati) btnGujarati.classList.add("active");
+
+        if (btnHindi) btnHindi.classList.toggle("active", lang === "hindi");
+        if (btnGujarati) btnGujarati.classList.toggle("active", lang === "gujarati");
+
         updateAppLanguageUI();
         refreshContent();
     };
@@ -184,6 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         if (videoObserver) videoObserver.disconnect();
+
         videoObserver = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 const video = entry.target.querySelector("video");
@@ -199,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         }, { threshold: 0.6 });
+
         document.querySelectorAll(".reels-container-fullscreen .reel-wrapper").forEach(wrapper => {
             videoObserver.observe(wrapper);
         });
@@ -213,6 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("bds_current_tab", targetTab);
         document.querySelectorAll("video").forEach(v => { v.pause(); v.muted = true; });
         document.body.classList.remove("fullscreen-active");
+
         if (sections.videos) sections.videos.classList.remove("fullscreen-active");
         if (reelsContainer) reelsContainer.className = "reels-container video-grid-layout";
         toggleCategoryButtons(true);
@@ -255,28 +490,9 @@ document.addEventListener("DOMContentLoaded", () => {
         lazyLoadObserver.observe(sentinel);
     }
 
-   // 🧹 लाइटबॉक्स को पूरी तरह साफ़ करने वाला हेल्पर फंक्शन
-    function destroyLightbox() {
-        if (lightboxInstance) {
-            try {
-                lightboxInstance.destroy();
-            } catch (e) {
-                console.log("Lightbox cleanup:", e);
-            }
-            lightboxInstance = null;
-        }
-        // बचे हुए HTML एलिमेंट्स को साफ़ करें
-        document.querySelectorAll(".sl-custom-actions, .sl-overlay, .sl-wrapper").forEach(el => el.remove());
-    }
-// 📸 Custom Lightbox Variables
-    let currentLightboxIndex = 0;
-    const photoItemsPerLoad = 25;
-
-    // 1. फोटो लोड करने का फंक्शन
     async function loadPhotosFromCloudinary(category) {
         if (!galleryContainer) return;
-
-        closeCustomLightbox(); // पुरानी कैटेगरी के लाइटबॉक्स को साफ़ करें
+        closeCustomLightbox();
         galleryContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:30px; grid-column: span 4;'>फोटो लोड हो रहे हैं...</p>";
 
         if (category === "favorites") {
@@ -291,9 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(url);
             if (!response.ok) throw new Error("Cloudinary Error");
             const data = await response.json();
-            
-            // डेटा लोड होते ही डेली शफल लागू करें
-cloudResources = shuffleArrayDaily(data.resources || []);
+            cloudResources = shuffleArrayDaily(data.resources || []);
             loadIndex = 0;
             galleryContainer.innerHTML = '';
 
@@ -308,18 +522,14 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         }
     }
 
-    // 2. पसंदीदा (Favorites) लोड करना
     function loadFavoritePhotos() {
         closeCustomLightbox();
         const favs = getFavorites().filter(f => f.type === 'photo' && f.id.startsWith(`${currentAppLang}-`));
-        
         galleryContainer.innerHTML = '';
         if (favs.length === 0) {
             galleryContainer.innerHTML = appLanguageData[currentAppLang].emptyFav;
             return;
         }
-
-        // फेवरेट के लिए रिसोर्स सेट करें
         cloudResources = favs.map(f => ({ public_id: f.id, format: '', customUrl: f.url }));
 
         favs.forEach((fav, idx) => {
@@ -334,24 +544,17 @@ cloudResources = shuffleArrayDaily(data.resources || []);
             img.src = fav.url;
             img.loading = "lazy";
 
-            const watermark = document.createElement("div");
-            watermark.className = "bds-watermark";
-            watermark.innerText = "BDS";
-
             aTag.appendChild(img);
             itemDiv.appendChild(aTag); 
-            itemDiv.appendChild(watermark);
             galleryContainer.appendChild(itemDiv);
         });
     }
 
-    // 3. 25-25 फोटो बैच रेंडर करना
     function renderPhotosBatch() {
         const batch = cloudResources.slice(loadIndex, loadIndex + photoItemsPerLoad);
         if (batch.length === 0) return;
 
         removeSentinel();
-
         const startIndex = loadIndex;
 
         batch.forEach((image, i) => {
@@ -359,7 +562,6 @@ cloudResources = shuffleArrayDaily(data.resources || []);
             const imgUrl = image.customUrl || `https://res.cloudinary.com/${cloudName}/image/upload/v${image.version}/${image.public_id}.${image.format}`;
             const photoId = image.customUrl ? image.public_id : `${currentAppLang}-${currentCategory}-photo-${image.public_id}`;
 
-            // ऑब्जेक्ट में आईडी और यूआरएल सुरक्षित करें
             image.fullUrl = imgUrl;
             image.uniqueId = photoId;
 
@@ -374,100 +576,66 @@ cloudResources = shuffleArrayDaily(data.resources || []);
             img.src = imgUrl;
             img.loading = "lazy";
 
-            const watermark = document.createElement("div");
-            watermark.className = "bds-watermark";
-            watermark.innerText = "BDS";
-
             aTag.appendChild(img);
             itemDiv.appendChild(aTag);
-            itemDiv.appendChild(watermark);
             galleryContainer.appendChild(itemDiv);
         });
 
         loadIndex += photoItemsPerLoad;
-
         if (loadIndex < cloudResources.length) {
             addSentinel(galleryContainer, renderPhotosBatch);
         }
     }
 
-  // 🛠️ कस्टम लाइटबॉक्स फंक्शंस (इनलाइन स्टाइल + कलरफुल बटन्स + टच स्वाइप)
-function openCustomLightbox(index) {
-    currentLightboxIndex = index;
-    
-    let modal = document.getElementById("custom-lightbox-modal");
-    if (!modal) {
-        modal = document.createElement("div");
-        modal.id = "custom-lightbox-modal";
-        
-        // 💡 फुलस्क्रीन पॉप-अप (ब्लर बैकग्राउंड)
-        modal.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0, 0, 0, 0.92) !important;
-            backdrop-filter: blur(10px) !important;
-            z-index: 999999 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: center !important;
-            box-sizing: border-box !important;
-        `;
+    function openCustomLightbox(index) {
+        currentLightboxIndex = index;
+        let modal = document.getElementById("custom-lightbox-modal");
 
-        // 🎨 बड़े और कलरफुल बटन्स + फोटो लेआउट
-        modal.innerHTML = `
-            <button id="lb-prev-btn" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; user-select: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❮</button>
-            
-            <img id="custom-lightbox-img" src="" alt="Photo" style="max-width: 95%; max-height: 78vh; object-fit: contain; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6);">
-            
-            <button id="lb-next-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; user-select: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❯</button>
-            
-            <div id="lightbox-actions" style="margin-top: 18px; display: flex; gap: 12px; z-index: 1000000;"></div>
-        `;
-        document.body.appendChild(modal);
+        if (!modal) {
+            modal = document.createElement("div");
+            modal.id = "custom-lightbox-modal";
+            modal.style.cssText = `
+                position: fixed !important; top: 0 !important; left: 0 !important;
+                width: 100vw !important; height: 100vh !important;
+                background: rgba(0, 0, 0, 0.92) !important; backdrop-filter: blur(10px) !important;
+                z-index: 999999 !important; display: flex !important;
+                flex-direction: column !important; justify-content: center !important;
+                align-items: center !important; box-sizing: border-box !important;
+            `;
 
-        modal.querySelector("#lb-prev-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(-1); };
-        modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(1); };
+            modal.innerHTML = `
+                <button id="lb-prev-btn" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❮</button>
+                <img id="custom-lightbox-img" src="" alt="Photo" style="max-width: 95%; max-height: 78vh; object-fit: contain; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6);">
+                <button id="lb-next-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❯</button>
+                <div id="lightbox-actions" style="margin-top: 18px; display: flex; gap: 12px; z-index: 1000000;"></div>
+            `;
+            document.body.appendChild(modal);
 
-        // 👈👉 टच स्वाइप (Touch Swipe) लॉजिक
-        let touchStartX = 0;
-        let touchEndX = 0;
+            modal.querySelector("#lb-prev-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(-1); };
+            modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(1); };
 
-        modal.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        }, { passive: true });
+            let touchStartX = 0;
+            modal.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+            modal.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const distance = touchStartX - touchEndX;
+                if (distance > 40) changeLightboxPhoto(1);
+                else if (distance < -40) changeLightboxPhoto(-1);
+            }, { passive: true });
+        }
 
-        modal.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].clientX;
-            const distance = touchStartX - touchEndX;
-
-            if (distance > 40) {
-                changeLightboxPhoto(1);  // बाएँ स्वाइप -> अगला फोटो
-            } else if (distance < -40) {
-                changeLightboxPhoto(-1); // दाएँ स्वाइप -> पिछला फोटो
-            }
-        }, { passive: true });
+        modal.style.display = "flex";
+        history.pushState({ lightbox: true }, "");
+        updateCustomLightboxView();
     }
-
-    modal.style.display = "flex";
-    history.pushState({ fullscreen: true }, "");
-    updateCustomLightboxView();
-}
 
     function changeLightboxPhoto(direction) {
         const nextIndex = currentLightboxIndex + direction;
-
         if (nextIndex >= 0 && nextIndex < cloudResources.length) {
             currentLightboxIndex = nextIndex;
-            
-            // 💡 ऑटो-लोड: 23-24वें फोटो पर पहुँचते ही अगला बैच जोड़ें
             if (currentLightboxIndex >= loadIndex - 2 && loadIndex < cloudResources.length) {
                 renderPhotosBatch();
             }
-            
             updateCustomLightboxView();
         }
     }
@@ -478,42 +646,33 @@ function openCustomLightbox(index) {
 
         const imgEl = document.getElementById("custom-lightbox-img");
         const actionsEl = document.getElementById("lightbox-actions");
-        
         const imgUrl = item.fullUrl || item.customUrl;
         const photoId = item.uniqueId || item.public_id;
 
         imgEl.src = imgUrl;
-
         const isLiked = isFavorite(photoId);
 
         actionsEl.innerHTML = `
-    <button id="lb-like-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: ${isLiked ? '#d63353' : 'rgba(173, 211, 211, 0.2)'}; color: #fff; backdrop-filter: blur(10px); box-shadow: 0 4px 5px rgba(0,0,0,0.3);">
-        ${isLiked ? "❤️ लाइक" : "🤍 लाइक"}
-    </button>
-    <button id="lb-share-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">💬 शेयर</button>
-    <button id="lb-close-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #8a2387, #d94e96f1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">↩️ बैक</button>
-`;
-       document.getElementById("lb-like-btn").onclick = () => {
-            const added = toggleFavoriteItem({ id: photoId, url: imgUrl, type: 'photo' });
+            <button id="lb-like-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: ${isLiked ? '#d63353' : 'rgba(173, 211, 211, 0.2)'}; color: #fff; backdrop-filter: blur(10px); box-shadow: 0 4px 5px rgba(0,0,0,0.3);">${isLiked ? "❤️ लाइक" : "🤍 लाइक"}</button>
+            <button id="lb-share-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">💬 शेयर</button>
+            <button id="lb-close-btn" style="padding: 10px 20px; border-radius: 25px; border: none; font-weight: bold; cursor: pointer; background: linear-gradient(135deg, #8a2387, #d94e96f1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">↩️ बैक</button>
+        `;
+
+        document.getElementById("lb-like-btn").onclick = () => {
+            toggleFavoriteItem({ id: photoId, url: imgUrl, type: 'photo' });
             updateCustomLightboxView();
             if (currentCategory === "favorites") loadFavoritePhotos();
         };
 
-        document.getElementById("lb-share-btn").onclick = () => {
-            shareMediaContent('photo', imgUrl);
-        };
-
+        document.getElementById("lb-share-btn").onclick = () => { shareMediaContent('photo', imgUrl); };
         document.getElementById("lb-close-btn").onclick = closeCustomLightbox;
     }
 
     function closeCustomLightbox() {
         const modal = document.getElementById("custom-lightbox-modal");
-        if (modal) {
-            modal.style.display = "none";
-        }
+        if (modal) modal.style.display = "none";
     }
 
-    // 🎥 2. Cloudinary Videos (Fixed full screen sizing for subsequent batches > 10)
     async function loadVideosFromCloudinary(category) {
         if (!reelsContainer) return;
         reelsContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:30px; grid-column: span 4;'>वीडियो लोड हो रहे हैं...</p>";
@@ -529,10 +688,8 @@ function openCustomLightbox(index) {
         try {
             const response = await fetch(url);
             if (!response.ok) throw new Error("Cloudinary Error");
-
             const data = await response.json();
-           // डेटा लोड होते ही डेली शफल लागू करें
-cloudResources = shuffleArrayDaily(data.resources || []);
+            cloudResources = shuffleArrayDaily(data.resources || []);
             loadIndex = 0;
             reelsContainer.innerHTML = '';
 
@@ -549,16 +706,12 @@ cloudResources = shuffleArrayDaily(data.resources || []);
 
     function loadFavoriteVideos() {
         const favs = getFavorites().filter(f => f.type === 'video' && f.id.startsWith(`${currentAppLang}-`));
-
         reelsContainer.innerHTML = '';
         if (favs.length === 0) {
             reelsContainer.innerHTML = appLanguageData[currentAppLang].emptyFav;
             return;
         }
-
-        favs.forEach(fav => {
-            renderSingleVideoElement(fav.url, fav.id, "favorites");
-        });
+        favs.forEach(fav => { renderSingleVideoElement(fav.url, fav.id, "favorites"); });
         setupVideoObserver();
     }
 
@@ -567,7 +720,6 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         if (batch.length === 0) return;
 
         removeSentinel();
-
         batch.forEach(videoItem => {
             const videoUrl = `https://res.cloudinary.com/${cloudName}/video/upload/v${videoItem.version}/${videoItem.public_id}.${videoItem.format}`;
             const videoId = `${currentAppLang}-${currentCategory}-video-${videoItem.public_id}`;
@@ -578,7 +730,6 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         if (loadIndex < cloudResources.length) {
             addSentinel(reelsContainer, renderVideosBatch);
         }
-        
         if (document.body.classList.contains("fullscreen-active")) {
             setupVideoObserver();
         }
@@ -616,9 +767,7 @@ cloudResources = shuffleArrayDaily(data.resources || []);
                 toggleCategoryButtons(false);
 
                 document.querySelectorAll("#reelsContainer .reel-wrapper").forEach(w => w.classList.remove("grid-video-item"));
-                document.querySelectorAll("video").forEach(v => {
-                    v.pause(); v.className = "fullscreen-video"; v.muted = true;
-                });
+                document.querySelectorAll("video").forEach(v => { v.pause(); v.className = "fullscreen-video"; v.muted = true; });
 
                 video.className = "fullscreen-video";
                 video.muted = false;
@@ -637,7 +786,6 @@ cloudResources = shuffleArrayDaily(data.resources || []);
             heart.innerHTML = '❤️';
             heart.className = 'double-tap-heart heart-animated';
             wrapper.appendChild(heart);
-
             const likeBtn = wrapper.querySelector('.fullscreen-like-btn');
             if (likeBtn && !likeBtn.classList.contains('liked')) likeBtn.click(); 
             setTimeout(() => { heart.remove(); }, 800);
@@ -648,7 +796,6 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         
         const fullscreenLikeBtn = document.createElement("button");
         const isAlreadyLiked = isFavorite(videoId);
-
         fullscreenLikeBtn.className = `action-btn fullscreen-like-btn ${isAlreadyLiked ? "liked" : ""}`;
         fullscreenLikeBtn.innerHTML = isAlreadyLiked ? "❤️" : "🤍";
 
@@ -663,10 +810,7 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         const shareBtn = document.createElement("button");
         shareBtn.className = "action-btn whatsapp-btn";
         shareBtn.innerHTML = "💬";
-        shareBtn.onclick = e => { 
-            e.stopPropagation(); 
-            shareMediaContent('video', videoUrl); // 👈 वीडियो फाइल + ब्रांडिंग शेयर करने के लिए
-        };
+        shareBtn.onclick = e => { e.stopPropagation(); shareMediaContent('video', videoUrl); };
 
         const closeBtn = document.createElement("button");
         closeBtn.className = "action-btn close-reel-btn";
@@ -683,7 +827,6 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         reelsContainer.appendChild(wrapper);
     }
 
-    // 📋 3. Text Status Loader (Paged with 25 items per batch on scroll)
     function loadTextStatus(category) {
         if (!txtContainer) return;
         txtContainer.innerHTML = "";
@@ -711,13 +854,11 @@ cloudResources = shuffleArrayDaily(data.resources || []);
 
     function loadFavoriteTexts() {
         const favs = getFavorites().filter(f => f.type === 'text' && f.id.startsWith(`${currentAppLang}-`));
-
         txtContainer.innerHTML = '';
         if (favs.length === 0) {
             txtContainer.innerHTML = appLanguageData[currentAppLang].emptyFav;
             return;
         }
-
         currentTextSourceList = favs;
         textLoadIndex = 0;
         renderTextBatch();
@@ -728,9 +869,7 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         const batch = currentTextSourceList.slice(textLoadIndex, textLoadIndex + textsPerLoad);
         if (batch.length === 0) return;
 
-        batch.forEach(item => {
-            renderSingleTextCard(item.text, item.id);
-        });
+        batch.forEach(item => { renderSingleTextCard(item.text, item.id); });
 
         textLoadIndex += textsPerLoad;
         if (textLoadIndex < currentTextSourceList.length) {
@@ -761,26 +900,24 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         const copyBtn = document.createElement("button");
         copyBtn.innerHTML = "📋 कॉपी";
         copyBtn.onclick = () => {
-            const textArea = document.createElement("textarea"); textArea.value = statusText;
-            document.body.appendChild(textArea); textArea.select(); document.execCommand("copy"); document.body.removeChild(textArea);
-            const originalText = copyBtn.innerText; copyBtn.innerText = "✅ कॉपीड!";
+            navigator.clipboard.writeText(statusText);
+            const originalText = copyBtn.innerText;
+            copyBtn.innerText = "✅ कॉपीड!";
             setTimeout(() => { copyBtn.innerText = originalText; }, 2000);
         };
 
         const shareBtn = document.createElement("button");
         shareBtn.innerHTML = "💬 शेयर";
         shareBtn.style = "padding:5px 12px; font-size:12px; background:#25D366; color:white; border:none; border-radius:5px;";
-        shareBtn.onclick = () => { 
-            shareMediaContent('text', statusText); // 👈 टेक्स्ट शायरी + ब्रांड नाम + ऐप लिंक शेयर करने के लिए
-        };
+        shareBtn.onclick = () => { shareMediaContent('text', statusText); };
+
         actionDiv.appendChild(likeBtn); actionDiv.appendChild(copyBtn); actionDiv.appendChild(shareBtn);
         card.appendChild(p); card.appendChild(actionDiv); txtContainer.appendChild(card);
     }
 
-    // 🔄 4. कंटेंट रिफ्रेश
     function refreshContent() {
         removeSentinel();
-        destroyLightbox(); // 💡 कैटेगरी या टैब बदलते ही लाइटबॉक्स की पूरी सफाई
+        closeCustomLightbox();
         if (galleryContainer) galleryContainer.innerHTML = "";
         if (reelsContainer) reelsContainer.innerHTML = "";
         if (txtContainer) txtContainer.innerHTML = "";
@@ -790,189 +927,56 @@ cloudResources = shuffleArrayDaily(data.resources || []);
         else if (currentTab === "videos") loadVideosFromCloudinary(currentCategory);
         else if (currentTab === "text") loadTextStatus(currentCategory);
     }
-   document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
-    btn.addEventListener("click", e => {
-        const btnId = e.currentTarget.id.toLowerCase();
-        if (btnId.includes("love")) currentCategory = "love";
-        else if (btnId.includes("sad")) currentCategory = "sad";
-        else if (btnId.includes("motivation")) currentCategory = "motivation";
-        else if (btnId.includes("fav")) currentCategory = "favorites";
-        else if (btnId.includes("bhakti")) currentCategory = "bhakti"; // यह लाइन जोड़ दें
-        else currentCategory = e.currentTarget.getAttribute("data-cat") || "love";
-        refreshContent();
+
+    document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
+        btn.addEventListener("click", e => {
+            const btnId = e.currentTarget.id.toLowerCase();
+            if (btnId.includes("love")) currentCategory = "love";
+            else if (btnId.includes("sad")) currentCategory = "sad";
+            else if (btnId.includes("motivation")) currentCategory = "motivation";
+            else if (btnId.includes("fav")) currentCategory = "favorites";
+            else if (btnId.includes("bhakti")) currentCategory = "bhakti";
+            else currentCategory = e.currentTarget.getAttribute("data-cat") || "love";
+            refreshContent();
+        });
     });
-});
+
+    const topHeaderShareBtn = document.getElementById("appShareBtn") || document.getElementById("app-share-btn");
+    if (topHeaderShareBtn) {
+        topHeaderShareBtn.onclick = (e) => {
+            e.preventDefault();
+            const userLang = getAppLanguage();
+            let shareMessage = userLang === "gujarati" 
+                ? "શાનદાર સ્ટેટસ માટે જુઓ Bhojani Digital Seva એપ! 👇" 
+                : "शानदार स्टेटस के लिए देखें Bhojani Digital Seva ऐप! 👇";
+            shareMediaContent('text', shareMessage);
+        };
+    }
 
     toggleLanguage(currentAppLang);
     switchTab(currentTab);
 });
 
-window.addEventListener('offline', () => alert("अरे! इंटरनेट कनेक्शन चेक करें।"));
-window.addEventListener('online', () => alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।"));
+// ==========================================
+// 📲 5. सर्विस वर्कर (PWA Offline)
+// ==========================================
 
-// 🌐 1. एक्टिव भाषा (हिंदी/गुजराती) सीधे स्क्रीन/बटन से पता करने का सबसे सेफ फंक्शन
-function getAppLanguage() {
-    // 💡 सबसे पहले HTML में देखें कि क्या गुजराती बटन active है
-    const gujBtn = document.getElementById("btnLangGujarati");
-    if (gujBtn && gujBtn.classList.contains("active")) {
-        return "gujarati";
-    }
-
-    // 💡 दूसरा बैकअप: अगर ग्लोबल वेरिएबल मौजूद हो
-    if (typeof currentAppLang !== "undefined" && currentAppLang) return currentAppLang;
-    if (typeof currentLang !== "undefined" && currentLang) return currentLang;
-    if (typeof currentLanguage !== "undefined" && currentLanguage) return currentLanguage;
-
-    // 💡 तीसरा बैकअप: LocalStorage
-    const savedLang = localStorage.getItem("appLang") || localStorage.getItem("lang") || localStorage.getItem("language");
-    if (savedLang) return savedLang.toLowerCase();
-
-    return "hindi"; // डिफ़ॉल्ट हिंदी
-}
-
-// 📤 2. ऑल-इन-वन स्मार्ट शेयर फंक्शन (FIXED)
-async function shareMediaContent(type, mediaUrlOrText) {
-    const appUrl = window.location.origin + window.location.pathname; // आपकी ऐप का लिंक
-    const userLang = getAppLanguage(); // 👈 यहाँ से ऑटोमेटिक सही भाषा मिलेगी
-
-    // 🏷️ ब्रांड नाम और संदेश
-    const appTitle = "Bhojani Daily Status";
-    let shareMsg = userLang === "gujarati" 
-        ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" 
-        : "ऐसे और शानदार स्टेटस देखने के लिए ऐप देखें:";
-
-    // ✨ सुंदर फ़ॉर्मेट वाला कैप्शन
-    const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${appUrl}`;
-
-    // 📝 TEXT / App Share
-    if (type === 'text') {
-        const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
-        
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: appTitle,
-                    text: fullText
-                    // ❌ url: appUrl यहाँ से हटा दिया गया है ताकि 2 बार लिंक न आए!
-                });
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
-                }
-            }
-        } else {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
-        }
-        return;
-    }
-    // 📸 PHOTO या VIDEO Share
-    if (navigator.share) {
-        try {
-            const response = await fetch(mediaUrlOrText);
-            const blob = await response.blob();
-            
-            const ext = type === 'photo' ? 'jpg' : 'mp4';
-            const mimeType = type === 'photo' ? 'image/jpeg' : 'video/mp4';
-            const fileName = `bds_status_${Date.now()}.${ext}`;
-
-            const file = new File([blob], fileName, { type: mimeType });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file],
-                    title: appTitle,
-                    text: captionText
-                });
-            } else {
-                await navigator.share({
-                    title: appTitle,
-                    text: `${captionText}\n\n${mediaUrlOrText}`,
-                    url: appUrl
-                });
-            }
-        } catch (err) {
-            if (err.name !== 'AbortError') {
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
-            }
-        }
-    } else {
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
-    }
-}
-
-// 📲 3. हेडर वाले "🔗 ऐप शेयर" बटन का लॉजिक
-document.addEventListener("DOMContentLoaded", () => {
-    const topHeaderShareBtn = document.getElementById("appShareBtn") || document.getElementById("app-share-btn");
-
-    if (topHeaderShareBtn) {
-        topHeaderShareBtn.onclick = (e) => {
-            e.preventDefault();
-
-            // 💡 तुरंत पता करें कि अभी कौन सी भाषा चुनी हुई है
-            const userLang = getAppLanguage();
-
-            let shareMessage = userLang === "gujarati" 
-                ? "શાનદાર સ્ટેટસ માટે જુઓ Bhojani Digital Seva એપ! 👇" 
-                : "शानदार स्टेटस के लिए देखें Bhojani Digital Seva ऐप! 👇";
-
-            if (typeof shareMediaContent === "function") {
-                shareMediaContent('text', shareMessage);
-            }
-        };
-    }
-});
-// Service Worker Registration and Auto-Update Check
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then((registration) => {
-            console.log('ServiceWorker registered: ', registration.scope);
-
-            // जब भी कोई नया अपडेट उपलब्ध हो
+        navigator.serviceWorker.register('./sw.js').then((registration) => {
             registration.onupdatefound = () => {
                 const installingWorker = registration.installing;
                 installingWorker.onstatechange = () => {
-                    if (installingWorker.state === 'installed') {
-                        if (navigator.serviceWorker.controller) {
-                            // नया अपडेट मिल गया है, पेज को ऑटोमैटिक रीफ्रेश कर सकते हैं या नोटिफिकेशन दिखा सकते हैं
-                            console.log('New content is available; please refresh.');
-                            if (confirm('नया अपडेट उपलब्ध है! ऐप को अपडेट करने के लिए OK दबाएं।')) {
-                                window.location.reload();
-                            }
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        if (confirm('नया अपडेट उपलब्ध है! ऐप को अपडेट करने के लिए OK दबाएं।')) {
+                            window.location.reload();
                         }
                     }
                 };
             };
-        }).catch((error) => {
-            console.log('ServiceWorker registration failed: ', error);
-        });
+        }).catch(err => console.error("SW Registration failed:", err));
     });
-}// 🗓️ 1. आज की तारीख से Seed Number बनाना
-function getDailySeed() {
-    const today = new Date();
-    // YYYYMMDD फॉर्मेट (उदा. 20260726)
-    return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
 }
 
-// 🎲 2. Seeded Random Number Generator (हर तारीख के लिए फिक्स रैंडम नंबर)
-function seededRandom(seed) {
-    return function() {
-        let t = seed += 0x6D2B79F5;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-// 🔀 3. डेली शफल फंक्शन (रोज़ रात 12 बजे ऑर्डर बदलेगा)
-function shuffleArrayDaily(array) {
-    if (!array || array.length === 0) return [];
-    const seed = getDailySeed();
-    const random = seededRandom(seed);
-    const shuffled = [...array]; // ओरिजिनल एरे को छुए बिना कॉपी बनाएं
-    
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-}
+window.addEventListener('offline', () => alert("अरे! इंटरनेट कनेक्शन चेक करें।"));
+window.addEventListener('online', () => alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।"));

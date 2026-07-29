@@ -6,7 +6,7 @@
     <title>Bhojani Digital Seva Status</title>
     
     <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
     
     <!-- SimpleLightbox & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.3/simple-lightbox.min.css">
@@ -17,48 +17,149 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
-        /* Apply Google Font Outfit to the entire page */
+        /* Global Font Outfit */
         body {
             font-family: 'Outfit', sans-serif !important;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
         }
 
-        /* 1. मुख्य मेनू बार - प्रीमियम ग्लास लुक */
+        /* 👑 1. ब्रांड हेडर एवं क्लासिक प्रोफाइल बटन */
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(20, 20, 20, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .brand-logo {
+            background: linear-gradient(135deg, #007bff, #00d2ff);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+        .brand-title h2 {
+            margin: 0;
+            font-size: 17px;
+            text-transform: uppercase;
+            color: #65a3e6;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .brand-title small {
+            font-size: 10px;
+            color: #aaa;
+            letter-spacing: 1px;
+            display: block;
+        }
+
+        /* ✨ क्लासिक प्रोफाइल बटन */
+        .profile-btn {
+            background: linear-gradient(135deg, #1e3c72, #2a5298) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            padding: 7px 14px !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            border-radius: 25px !important;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.4) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .profile-btn:hover, .profile-btn:active {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 18px rgba(42, 82, 152, 0.6) !important;
+            background: linear-gradient(135deg, #2a5298, #1e3c72) !important;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lang-toggle-container {
+            display: flex;
+            background: #2a2a2a;
+            border-radius: 20px;
+            padding: 2px;
+        }
+        .lang-toggle-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .lang-toggle-btn.active {
+            background: #007bff;
+            color: #fff;
+        }
+        .btn-dark-toggle, .top-action-btn {
+            background: #252525;
+            color: white;
+            border: 1px solid #333;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .top-action-btn {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border: none;
+        }
+
+        /* 2. मुख्य मेनू बार - प्रीमियम ग्लास लुक */
         .main-navbar {
             display: flex;
             justify-content: space-around;
             align-items: center;
             background-color: rgba(26, 26, 26, 0.95) !important;
             backdrop-filter: blur(10px);
-            padding: 12px 8px !important;
+            padding: 10px 8px !important;
             position: sticky;
             top: 0;
             z-index: 99;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .nav-tab {
             background: transparent !important;
             border: none !important;
             color: #a0a0a0 !important;
-            padding: 10px 20px !important;
-            font-size: 15px !important;
+            padding: 8px 18px !important;
+            font-size: 14px !important;
             font-weight: 600 !important;
             border-radius: 25px !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             cursor: pointer;
-            letter-spacing: 0.5px;
         }
-        /* एक्टिव होने पर चमकदार ग्रेडिएंट और शैडो */
         .nav-tab.active {
             background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc) !important;
             color: white !important;
-            box-shadow: 0 6px 15px rgba(67, 100, 247, 0.4) !important;
-            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(67, 100, 247, 0.4) !important;
         }
 
-        /* 2. कैटेगरी चिप्स - स्मूथ मोबाइल स्क्रॉलिंग */
+        /* 3. कैटेगरी चिप्स */
         .category-chips {
             display: flex;
             gap: 10px;
-            padding: 14px 12px;
+            padding: 12px;
             overflow-x: auto;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
@@ -70,9 +171,9 @@
             background-color: #262626 !important;
             color: #e0e0e0 !important;
             border: 1px solid #333 !important;
-            padding: 8px 18px !important;
+            padding: 8px 16px !important;
             border-radius: 20px !important;
-            font-size: 14px !important;
+            font-size: 13px !important;
             font-weight: 500 !important;
             white-space: nowrap;
             transition: all 0.2s ease !important;
@@ -85,21 +186,21 @@
             box-shadow: 0 4px 10px rgba(0, 132, 255, 0.3) !important;
         }
 
-        /* 3. इमेज ग्रिड और कार्ड्स */
+        /* 4. इमेज ग्रिड */
         #autoGallery {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 14px !important;
-            padding: 14px !important;
+            gap: 12px !important;
+            padding: 12px !important;
         }
         #autoGallery a {
             display: block !important;
             background-color: #1a1a1a !important;
-            border-radius: 16px !important;
+            border-radius: 14px !important;
             overflow: hidden !important;
             aspect-ratio: 3 / 4 !important;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
         }
         #autoGallery a:active {
             transform: scale(0.97);
@@ -108,86 +209,104 @@
             width: 100% !important;
             height: 100% !important;
             object-fit: cover !important;
-            object-position: center !important;
         }
 
-        /* 4. वॉटरमार्क और लाइक बटन बेस */
-        .gallery-item-wrapper, .video-item-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            border-radius: 16px;
+        /* 5. क्लासिक प्रोफाइल मोडल overlay & card */
+        .profile-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 999999;
+            align-items: center;
+            justify-content: center;
         }
-        .reels-container-fullscreen .bds-watermark {
-            position: absolute !important;
-            bottom: 95px !important;
-            left: 20px !important;
-            right: auto !important;
-            background: transparent !important;
-            backdrop-filter: none !important;
-            border: none !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            z-index: 10002 !important;
+        .profile-modal-overlay.active {
             display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 2px !important;
-            pointer-events: none !important;
         }
-
-        .grid-video-item .bds-watermark, .gallery-item .bds-watermark {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(0, 123, 255, 0.8);
-            color: white;
-            font-size: 11px;
-            padding: 3px 6px;
-            border-radius: 4px;
-            z-index: 5;
+        .profile-modal-card {
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            position: relative;
+            color: #fff;
         }
-
-        .fullscreen-like-btn {
-            background: rgba(0, 0, 0, 0.7) !important;
-            color: white !important;
-            transition: transform 0.2s ease !important;
+        .close-modal-btn {
+            position: absolute; top: 15px; right: 18px;
+            background: none; border: none; color: #aaa;
+            font-size: 24px; cursor: pointer;
         }
-        .fullscreen-like-btn.liked {
-            color: #ff2b55 !important;
-            background: rgba(255, 255, 255, 0.9) !important;
-            border-color: #ff2b55 !important;
-            transform: scale(1.1);
+        .avatar-upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .avatar-preview img {
+            width: 90px; height: 90px;
+            border-radius: 50%; object-fit: cover;
+            border: 3px solid #0084ff;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,132,255,0.3);
+        }
+        .upload-badge {
+            margin-top: 10px; background: #2a2a2a; color: #38ef7d;
+            padding: 6px 14px; border-radius: 15px; font-size: 12px;
+            font-weight: bold; cursor: pointer; border: 1px solid #38ef7d;
+        }
+        .input-group {
+            margin-bottom: 14px; text-align: left;
+        }
+        .input-group label {
+            display: block; font-size: 12px; color: #aaa; margin-bottom: 5px;
+        }
+        .input-group input {
+            width: 100%; padding: 10px 12px;
+            background: #121212; border: 1px solid #333;
+            border-radius: 10px; color: #fff; font-size: 14px;
+            box-sizing: border-box; outline: none;
+        }
+        .input-group input:focus {
+            border-color: #0084ff;
+        }
+        #saveProfileBtn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #0052d4, #4364f7);
+            border: none; color: #fff; font-weight: bold;
+            font-size: 15px; border-radius: 12px; cursor: pointer;
+            margin-top: 10px; box-shadow: 0 4px 12px rgba(67, 100, 247, 0.4);
         }
     </style>
 </head>
 <body>
 
     <!-- Header Section -->
-    <div class="brand-header" style="display: flex; align-items: center; padding: 10px; background: var(--header-bg); border-bottom: 2px solid #eee;">
-        <div class="brand-logo" style="background: #007bff; color: white; padding: 10px; border-radius: 8px; font-weight: bold; margin-right: 15px;">BDS</div>
-        
-        <div class="brand-title" style="flex-grow: 1;">
-            <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; color:#65a3e6; font-weight: 800;">BHOJANI DAILY STATUS</h2>
-            <small style="font-size: 12px; color: #666; letter-spacing: 1px;">BY BHOJANI DIGITAL SEVA</small>
+    <div class="brand-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="brand-logo">BDS</div>
+            <div class="brand-title">
+                <h2>Bhojani Daily Status</h2>
+                <small>BY BHOJANI DIGITAL SEVA</small>
+            </div>
         </div>
 
-        <div class="user-profile" onclick="openProfile()">
-            <span id="user-initial"></span> 
-        </div>
-
-        <div class="header-center">
+        <div class="header-actions">
+            <!-- क्लासिक लुक प्रोफाइल बटन -->
+            <button class="profile-btn" onclick="openProfileModal()">👤 प्रोफाइल</button>
+            
             <div class="lang-toggle-container">
                 <button id="btnLangHindi" class="lang-toggle-btn active" onclick="toggleLanguage('hindi')">🇮🇳 हिंदी</button>
                 <button id="btnLangGujarati" class="lang-toggle-btn" onclick="toggleLanguage('gujarati')">📿 ગુજરાતી</button>
             </div>
+            
+            <button id="darkModeBtn" class="btn-dark-toggle">🌙</button>
+            <button id="appShareBtn" class="top-action-btn">🔗 शेयर</button>
         </div>
-        
-        <button id="darkModeBtn" class="btn-dark-toggle">🌙</button>
-        <button id="appShareBtn" class="top-action-btn" style="padding: 6px 12px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; margin-left: 9px;">
-            🔗 ऐप शेयर
-        </button>
     </div>
 
     <!-- Navigation Bar -->
@@ -233,14 +352,40 @@
         <div class="reels-container" id="reelsContainer"></div>
     </div>
 
-    <!-- Profile Modal -->
-    <div id="profileModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeProfile()">&times;</span>
-            <h2>प्रोफाइल</h2>
-            <input type="text" id="userNameInput" placeholder="अपना नाम लिखें...">
-            <button onclick="saveName()">नाम सेव करें</button>
-            <p id="displayName"></p>
+    <!-- प्रोफाइल मोडल POPUP -->
+    <div id="profileModal" class="profile-modal-overlay">
+        <div class="profile-modal-card">
+            <button class="close-modal-btn" onclick="closeProfileModal()">&times;</button>
+            
+            <h3 id="modalTitle" style="margin-top: 0; text-align: center; color: #fff;">आपकी प्रोफाइल सेट करें 👤</h3>
+            <p class="modal-subtitle" id="modalSubTitle" style="font-size: 11px; color: #aaa; text-align: center; margin-bottom: 15px;">यह जानकारी आपके हर फोटो स्टेटस पर दिखाई देगी</p>
+            
+            <div class="avatar-upload-container">
+                <div class="avatar-preview" onclick="document.getElementById('avatarInput').click()">
+                    <img id="avatarImage" src="https://cdn-icons-png.flaticon.com/512/3177/3177440.png" alt="Profile Preview">
+                </div>
+                <label class="upload-badge" id="uploadBadgeBtn" onclick="document.getElementById('avatarInput').click()">
+                    📷 फोटो चुनें
+                </label>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="previewPhoto(event)">
+            </div>
+
+            <div class="input-group">
+                <label id="lblInputName">पूरा नाम</label>
+                <input type="text" id="inputName" placeholder="उदा. गोपाल शर्मा">
+            </div>
+
+            <div class="input-group">
+                <label id="lblInputPhone">मोबाइल नंबर (ऐच्छिक)</label>
+                <input type="tel" id="inputPhone" placeholder="उदा. +91 9876543210">
+            </div>
+
+            <div class="input-group">
+                <label id="lblInputTagline">पद / पहचान (Designation)</label>
+                <input type="text" id="inputTagline" placeholder="उदा. समाजसेवी / बिजनेस ऑनर">
+            </div>
+
+            <button id="saveProfileBtn" onclick="saveUserProfile()">सेव करें 🚀</button>
         </div>
     </div>
 
@@ -250,7 +395,7 @@
     <script src="script.js"></script>
     
     <script>
-        // Category Chips Active Highlight Toggle
+        // Category Chips Active Class Switcher
         document.querySelectorAll('.btn-category').forEach(button => {
             button.addEventListener('click', function() {
                 this.parentElement.querySelectorAll('.btn-category').forEach(btn => btn.classList.remove('active'));
@@ -258,34 +403,5 @@
             });
         });
     </script>
-    <script>
-  if ('serviceWorker' in navigator) {
-    // 1. सर्विस वर्कर रजिस्टर करें
-    navigator.serviceWorker.register('./sw.js').then((registration) => {
-      
-      // बैकग्राउंड में चेक करेगा कि नया अपडेट आया है या नहीं
-      registration.onupdatefound = () => {
-        const installingWorker = registration.installing;
-        if (installingWorker) {
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // नया अपडेट आते ही रीलोड हो जाएगा
-              window.location.reload();
-            }
-          };
-        }
-      };
-    });
-
-    // 2. जब नया सर्विस वर्कर एक्टिवेट होगा तो पेज ऑटो-रिफ्रेश करेगा
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
-      }
-    });
-  }
-</script>
 </body>
 </html>

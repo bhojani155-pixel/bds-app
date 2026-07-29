@@ -4,6 +4,8 @@ videos/
 compressed_videos/
 my_original_videos/
 background_music/
-
+big_videos
+bg_music
+output_clips
 # 2. API Keys और Secrets (सुरक्षा के लिए)
 .env
