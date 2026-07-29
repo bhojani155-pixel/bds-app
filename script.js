@@ -224,16 +224,28 @@ function createProfileStitchedBlob(imageUrl, profile) {
         img.onerror = err => reject(err);
     });
 }
+// 🌐 आपकी ऐप का असली लिंक (वेबसाइट लाइव होने पर यहाँ अपना असली https डोमेन डाल सकते हैं)
+// 🌐 स्मार्ट ऐप लिंक (लोकल सर्वर पर टेस्ट करते वक्त भी असली Vercel लिंक ही शेयर होगी)
+const isLocal = window.location.hostname === "localhost" || 
+                window.location.hostname === "127.0.0.1" || 
+                window.location.protocol === "file:";
 
-// 📤 स्मार्ट शेयर फ़ंक्शन
+const YOUR_APP_URL = isLocal 
+    ? "https://bds-app-olive.vercel.app/" 
+    : (window.location.origin + window.location.pathname);
+
+// 📤 स्मार्ट शेयर फ़ंक्शन (ऑटो-कॉपी एवं लिंक फिक्स के साथ)
 async function shareMediaContent(type, mediaUrlOrText) {
-    const appUrl = window.location.origin + window.location.pathname;
     const userLang = getAppLanguage();
-
     const appTitle = "Bhojani Daily Status";
-    let shareMsg = userLang === "gujarati" ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" : "ऐसे और शानदार स्टेटस देखने के लिए ऐप देखें:";
-    const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${appUrl}`;
 
+    let shareMsg = userLang === "gujarati" 
+        ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" 
+        : "ऐसे और शानदार स्टेटस देखने के लिए देखें:";
+
+    const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${YOUR_APP_URL}`;
+
+    // 1. केवल टेक्स्ट स्टेटस शेयर
     if (type === 'text') {
         const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
         if (navigator.share) {
@@ -248,6 +260,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
         return;
     }
 
+    // 2. फोटो और वीडियो शेयर
     try {
         let file;
         const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
@@ -263,14 +276,29 @@ async function shareMediaContent(type, mediaUrlOrText) {
             file = new File([blob], fileName, { type: 'video/mp4' });
         }
 
+        // 💡 बैकअप ट्रिक: कैप्शन और लिंक को क्लिपबोर्ड में कॉपी करें
+        try {
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(captionText);
+            }
+        } catch (clipErr) {
+            console.log('Clipboard copy skipped');
+        }
+
+        // एंड्रॉइड/आईओएस नेटिव शेयरिंग
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: appTitle, text: captionText });
+            await navigator.share({
+                files: [file],
+                title: appTitle,
+                text: captionText
+            });
         } else {
+            // अगर डायरेक्ट फ़ाइल शेयरिंग सपोर्ट न हो (डेस्कटॉप आदि पर)
             const downloadLink = document.createElement('a');
             downloadLink.href = URL.createObjectURL(file);
             downloadLink.download = fileName;
             downloadLink.click();
-            alert('✅ फोटो आपकी गैलरी में सेव हो गई है!');
+            alert('✅ फोटो गैलरी में सेव हो गई है और ऐप लिंक कॉपी हो गया है!');
         }
     } catch (err) {
         console.error('Sharing Error:', err);
