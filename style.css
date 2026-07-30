@@ -768,19 +768,26 @@ body.dark-mode .lang-toggle-btn.active {
   transform: scale(0.98);
 }
 
-/* 🌙 डार्क थीम के लिए स्पेसिफिक ओवरराइड */
-body.dark-theme .profile-modal-card,
-body.dark .profile-modal-card,
-[data-theme="dark"] .profile-modal-card {
-  background: #18191c;
-  color: #ffffff;
-  border-color: #2a2d34;
+/* डिफ़ॉल्ट डार्क थीम */
+body, body.dark-mode {
+    background-color: #121212 !important;
+    color: #ffffff !important;
 }
 
-body.dark-theme .input-group input,
-body.dark .input-group input,
-[data-theme="dark"] .input-group input {
-  background: #24262b;
-  border-color: #363942;
-  color: #ffffff;
+/* ☀️ जब लाइट मोड एक्टिव हो */
+body.light-mode {
+    background-color: #f4f6f9 !important;
+    color: #1a1a1a !important;
+}
+
+/* लाइट मोड में नेवबार और कार्ड्स */
+body.light-mode .main-navbar,
+body.light-mode .brand-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #dbd9e7e5 !important;
+}
+
+body.light-mode .chip.btn-category {
+    background-color: #e2e8f0 !important;
+    color: #1a202c !important;
 }

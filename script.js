@@ -984,7 +984,59 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleLanguage(currentAppLang);
     switchTab(currentTab);
 });
+// 🔄 यूनिवर्सल थीम टॉगल फंक्शन
+function toggleTheme() {
+    // 1. body पर क्लास स्विच करें
+    const isLightNow = document.body.classList.toggle('light-mode');
+    
+    // अगर आपकी पुरानी CSS 'dark-mode' इस्तेमाल करती है, तो उसे भी हैंडल करें
+    if (isLightNow) {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('userTheme', 'light');
+    } else {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('userTheme', 'dark');
+    }
 
+    // 2. बटन का टेक्स्ट/आइकन बदलें
+    updateThemeButtonUI(isLightNow);
+}
+
+// बटन का टेक्स्ट अपडेट करने का फ़ंक्शन
+function updateThemeButtonUI(isLight) {
+    // आपकी ऐप में बटन की जो भी क्लास/ID हो, यह सबको ढूँढ लेगा
+    const btn = document.querySelector('.btn-dark-toggle') || 
+                document.querySelector('.theme-btn') || 
+                document.getElementById('themeBtn');
+
+    if (btn) {
+        btn.innerHTML = isLight ? '🌙 Dark' : '☀️ Light';
+    }
+}
+
+// 🚀 पेज लोड होते ही थीम और बटन सेट करें
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('userTheme');
+    
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.body.classList.remove('dark-mode');
+        updateThemeButtonUI(true);
+    } else {
+        document.body.classList.remove('light-mode');
+        document.body.classList.add('dark-mode');
+        updateThemeButtonUI(false);
+    }
+
+    // किसी भी डार्क/लाइट बटन पर अपने-आप क्लिक इवेंट जोड़ें
+    const btn = document.querySelector('.btn-dark-toggle') || 
+                document.querySelector('.theme-btn') || 
+                document.getElementById('themeBtn');
+                
+    if (btn) {
+        btn.onclick = toggleTheme;
+    }
+});
 // ==========================================
 // 📲 5. सर्विस वर्कर (PWA Offline)
 // ==========================================

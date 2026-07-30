@@ -64,9 +64,9 @@
 
         /* ✨ क्लासिक प्रोफाइल बटन */
         .profile-btn {
-            background: linear-gradient(135deg, #1e3c72, #2a5298) !important;
+           background: linear-gradient(135deg, #00c6ff, #ff0090) !important;
             color: #ffffff !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border: 1px solid rgba(22, 173, 158, 0.2) !important;
             padding: 7px 14px !important;
             font-size: 13px !important;
             font-weight: 700 !important;
@@ -155,37 +155,80 @@
             box-shadow: 0 4px 12px rgba(67, 100, 247, 0.4) !important;
         }
 
-        /* 3. कैटेगरी चिप्स */
-        .category-chips {
-            display: flex;
-            gap: 10px;
-            padding: 12px;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-        .category-chips::-webkit-scrollbar {
-            display: none;
-        }
-        .chip.btn-category {
-            background-color: #262626 !important;
-            color: #e0e0e0 !important;
-            border: 1px solid #333 !important;
-            padding: 8px 16px !important;
-            border-radius: 20px !important;
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            white-space: nowrap;
-            transition: all 0.2s ease !important;
-            cursor: pointer;
-        }
-        .chip.btn-category.active {
-            background: #0084ff !important;
-            color: white !important;
-            border-color: #0044ff !important;
-            box-shadow: 0 4px 10px rgba(0, 132, 255, 0.3) !important;
-        }
+       /* 🌈 3. कलरफुल एवं प्रीमियम सब-कैटेगरी चिप्स (Sub-Category Chips) */
+.category-chips {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+.category-chips::-webkit-scrollbar {
+    display: none;
+}
 
+/* ⚪ इनएक्टिव चिप्स (लाइट मोड) */
+.chip.btn-category {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1.5px solid #e2e8f0 !important;
+    padding: 8px 18px !important;
+    border-radius: 30px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 🌙 इनएक्टिव चिप्स (डार्क मोड) */
+body:not(.light-mode) .chip.btn-category {
+    background: #1e1e2e !important;
+    color: #e2e8f0 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 💥 होवर और टच एनीमेशन (Hover & Click effect) */
+.chip.btn-category:active, 
+.chip.btn-category:hover {
+    transform: translateY(-2px) scale(1.04);
+}
+
+/* 🔥🔥 1. डिफ़ॉल्ट एक्टिव चिप (Selected Category - वाइब्रेंट पिंक/पर्पल/ब्लू) */
+.chip.btn-category.active {
+    background: linear-gradient(135deg, #ff007f, #7928ca, #0072ff) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 6px 18px rgba(121, 40, 202, 0.45) !important;
+    transform: translateY(-2px) scale(1.05) !important;
+}
+
+/* 💡 बोनस: अगर आप चाहें तो हर कैटेगरी को अलग-अलग कलर दे सकते हैं (Optional) */
+/* उदास / Sad Category */
+.chip.btn-category.active[data-cat="sad"],
+.chip.btn-category.active[data-cat="उदास"] {
+    background: linear-gradient(135deg, #4776E6, #8E54E9) !important;
+    box-shadow: 0 6px 18px rgba(71, 118, 230, 0.4) !important;
+}
+
+/* भक्ति / Bhakti Category */
+.chip.btn-category.active[data-cat="bhakti"],
+.chip.btn-category.active[data-cat="ભક્તિ"] {
+    background: linear-gradient(135deg, #FF512F, #DD2476) !important;
+    box-shadow: 0 6px 18px rgba(255, 81, 47, 0.4) !important;
+}
+
+/* प्रेरणात्मक / Motivational Category */
+.chip.btn-category.active[data-cat="motivational"] {
+    background: linear-gradient(135deg, #11998e, #38ef7d) !important;
+    box-shadow: 0 6px 18px rgba(56, 239, 125, 0.4) !important;
+}
         /* 4. इमेज ग्रिड */
         #autoGallery {
             display: grid !important;
@@ -211,76 +254,7 @@
             object-fit: cover !important;
         }
 
-        /* 5. क्लासिक प्रोफाइल मोडल overlay & card */
-        .profile-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 999999;
-            align-items: center;
-            justify-content: center;
-        }
-        .profile-modal-overlay.active {
-            display: flex !important;
-        }
-        .profile-modal-card {
-            background: #1e1e1e;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 24px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            position: relative;
-            color: #fff;
-        }
-        .close-modal-btn {
-            position: absolute; top: 15px; right: 18px;
-            background: none; border: none; color: #aaa;
-            font-size: 24px; cursor: pointer;
-        }
-        .avatar-upload-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 15px 0;
-        }
-        .avatar-preview img {
-            width: 90px; height: 90px;
-            border-radius: 50%; object-fit: cover;
-            border: 3px solid #0084ff;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,132,255,0.3);
-        }
-        .upload-badge {
-            margin-top: 10px; background: #2a2a2a; color: #38ef7d;
-            padding: 6px 14px; border-radius: 15px; font-size: 12px;
-            font-weight: bold; cursor: pointer; border: 1px solid #38ef7d;
-        }
-        .input-group {
-            margin-bottom: 14px; text-align: left;
-        }
-        .input-group label {
-            display: block; font-size: 12px; color: #aaa; margin-bottom: 5px;
-        }
-        .input-group input {
-            width: 100%; padding: 10px 12px;
-            background: #121212; border: 1px solid #333;
-            border-radius: 10px; color: #fff; font-size: 14px;
-            box-sizing: border-box; outline: none;
-        }
-        .input-group input:focus {
-            border-color: #0084ff;
-        }
-        #saveProfileBtn {
-            width: 100%; padding: 12px;
-            background: linear-gradient(135deg, #0052d4, #4364f7);
-            border: none; color: #fff; font-weight: bold;
-            font-size: 15px; border-radius: 12px; cursor: pointer;
-            margin-top: 10px; box-shadow: 0 4px 12px rgba(67, 100, 247, 0.4);
-        }
+       
     </style>
 </head>
 <body>
@@ -403,5 +377,13 @@
             });
         });
     </script>
+    <footer class="app-footer">
+    <p>© 2026 Bhojani Daily Status | All Rights Reserved</p>
+    <p>
+        <a href="about.html" target="_blank">About Us</a> • 
+        <a href="privacy.html" target="_blank">Privacy Policy</a> • 
+        <a href="terms.html" target="_blank">Terms & Conditions</a>
+    </p>
+</footer>
 </body>
 </html>
