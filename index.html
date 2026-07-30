@@ -208,26 +208,41 @@ body:not(.light-mode) .chip.btn-category {
     box-shadow: 0 6px 18px rgba(121, 40, 202, 0.45) !important;
     transform: translateY(-2px) scale(1.05) !important;
 }
+/* 🌈 सभी सब-कैटेगरी के 100% वर्किंग स्पेशल कलर्स (Light & Dark दोनों के लिए) */
 
-/* 💡 बोनस: अगर आप चाहें तो हर कैटेगरी को अलग-अलग कलर दे सकते हैं (Optional) */
-/* उदास / Sad Category */
-.chip.btn-category.active[data-cat="sad"],
-.chip.btn-category.active[data-cat="उदास"] {
+/* 1st बटन: मनपसंद (ब्रांडेड ऑरेंज/गोल्ड) */
+.category-chips .chip.btn-category:nth-child(1).active {
+    background: linear-gradient(135deg, #FF9900, #FF5500) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(255, 153, 0, 0.45) !important;
+}
+
+/* 2nd बटन: प्रेम (हॉट रेड/रोज़ पिंक) */
+.category-chips .chip.btn-category:nth-child(2).active {
+    background: linear-gradient(135deg, #FF0844, #FF4E50) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(255, 8, 68, 0.45) !important;
+}
+
+/* 3rd बटन: उदास (रॉयल ब्लू/पर्पल) */
+.category-chips .chip.btn-category:nth-child(3).active {
     background: linear-gradient(135deg, #4776E6, #8E54E9) !important;
-    box-shadow: 0 6px 18px rgba(71, 118, 230, 0.4) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(71, 118, 230, 0.45) !important;
 }
 
-/* भक्ति / Bhakti Category */
-.chip.btn-category.active[data-cat="bhakti"],
-.chip.btn-category.active[data-cat="ભક્તિ"] {
-    background: linear-gradient(135deg, #FF512F, #DD2476) !important;
-    box-shadow: 0 6px 18px rgba(255, 81, 47, 0.4) !important;
-}
-
-/* प्रेरणात्मक / Motivational Category */
-.chip.btn-category.active[data-cat="motivational"] {
+/* 4th बटन: प्रेरणात्मक (शाइनी ग्रीन) */
+.category-chips .chip.btn-category:nth-child(4).active {
     background: linear-gradient(135deg, #11998e, #38ef7d) !important;
-    box-shadow: 0 6px 18px rgba(56, 239, 125, 0.4) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(56, 239, 125, 0.45) !important;
+}
+
+/* 5th बटन: भक्ति (भगवा ऑरेंज/रेड) */
+.category-chips .chip.btn-category:nth-child(5).active {
+    background: linear-gradient(135deg, #FF512F, #DD2476) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(255, 81, 47, 0.45) !important;
 }
         /* 4. इमेज ग्रिड */
         #autoGallery {

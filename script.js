@@ -224,7 +224,6 @@ function createProfileStitchedBlob(imageUrl, profile) {
         img.onerror = err => reject(err);
     });
 }
-// 🌐 आपकी ऐप का असली लिंक (वेबसाइट लाइव होने पर यहाँ अपना असली https डोमेन डाल सकते हैं)
 // 🌐 स्मार्ट ऐप लिंक (लोकल सर्वर पर टेस्ट करते वक्त भी असली Vercel लिंक ही शेयर होगी)
 const isLocal = window.location.hostname === "localhost" || 
                 window.location.hostname === "127.0.0.1" || 
