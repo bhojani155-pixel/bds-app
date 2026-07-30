@@ -1,6 +1,6 @@
 const CACHE_NAME = 'bhojani-status-v1.9';
 
-// 1. सभी ज़रूरी फाइलों के सही रिलेटिव पाथ (./)
+// 1. सभी ज़रूरी फाइलों के पाथ
 const ASSETS = [
     "./",
     "./index.html",
@@ -13,40 +13,43 @@ const ASSETS = [
     "./icon2.png"
 ];
 
-// 2. फ़ाइलों को कैश (Cache) में सेव करना
+// 2. सेफ़ इन्स्टॉल: अगर कोई 1 फ़ाइल न मिले, तब भी सर्विस वर्कर क्रैश नहीं होगा
 self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting(); // नया सर्विस वर्कर तुरंत लागू करें
-});
-
-// 3. जब भी आप CACHE_NAME (जैसे bds-v1 से bds-v2) बदलें, पुराना कैश अपने आप डिलीट हो जाएगा
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
+    self.skipWaiting();
+    e.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return Promise.allSettled(
+                ASSETS.map((url) => 
+                    cache.add(url).catch((err) => console.log("Missing file skipped:", url))
+                )
+            );
         })
-      );
-    })
-  );
-  self.clients.claim();
+    );
 });
 
-// 4. फ़ाइलों को हैंडल करना (Cloudinary के डेटा को हमेशा ताज़ा रखना)
-self.addEventListener("fetch", (e) => {
-  // अगर रिक्वेस्ट Cloudinary की है, तो उसे हमेशा सीधे इंटरनेट से मँगवाएँ
-  if (e.request.url.includes("cloudinary.com")) {
-    e.respondWith(fetch(e.request));
-    return;
-  }
+// 3. पुराना कैश अपने आप डिलीट करें
+self.addEventListener("activate", (e) => {
+    e.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.map((key) => {
+                    if (key !== CACHE_NAME) {
+                        return caches.delete(key);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
+});
 
-  // ऐप की अपनी लोकल फाइलों के लिए (Cache First)
-  e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
-  );
+// 4. फ़ाइलों को हैंडल करना (Cloudinary हमेशा लाइव इंटरनेट से)
+self.addEventListener("fetch", (e) => {
+    if (e.request.url.includes("cloudinary.com")) {
+        e.respondWith(fetch(e.request));
+        return;
+    }
+
+    e.respondWith(
+        caches.match(e.request).then((res) => res || fetch(e.request))
+    );
 });
