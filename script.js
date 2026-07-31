@@ -142,7 +142,7 @@ function closeProfileModal() {
 window.closeProfileModal = closeProfileModal;
 
 // ==========================================
-// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - FIXED BOTTOM POSITION)
+// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - TOP HEADER BADGE)
 // ==========================================
 
 // 🔹 Round glass card banane ka helper function
@@ -189,15 +189,16 @@ function createProfileStitchedBlob(imageUrl, profile) {
 
             // 2. Profile card (yadi user ka naam saved hai)
             if (profile && profile.name) {
-                // 📐 Position: Card Height 11.5% aur Bottom Margin 2.5% (Niche ki taraf)
-                const cardHeight = Math.floor(canvas.height * 0.115);
+                // 📐 Position: TOP HEADER (Photo ke Upar 3% margin par)
+                // Isse Niche WhatsApp Caption / Link se bilkul koi takraav nahi hoga!
+                const cardHeight = Math.floor(canvas.height * 0.10);
                 const marginX = Math.floor(canvas.width * 0.035);
-                const marginBottom = Math.floor(canvas.height * 0.025); // 👈 Bilkul niche set kiya taaki text na kate
+                const marginTop = Math.floor(canvas.height * 0.03); // 👈 TOP Position
 
                 const cardWidth = canvas.width - (marginX * 2);
                 const cardX = marginX;
-                const cardY = canvas.height - cardHeight - marginBottom;
-                const borderRadius = Math.floor(cardHeight * 0.20);
+                const cardY = marginTop;
+                const borderRadius = Math.floor(cardHeight * 0.25);
 
                 // 🌙 Transparent dark glass background card
                 drawCanvasCard(
@@ -207,13 +208,13 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     cardWidth,
                     cardHeight,
                     borderRadius,
-                    'rgba(0, 0, 0, 0.85)',
+                    'rgba(0, 0, 0, 0.78)',
                     'rgba(255, 255, 255, 0.25)'
                 );
 
                 let textXOffset = cardX + cardHeight * 0.35;
 
-                // 🖼️ User ki bada gol profile photo (80% height)
+                // 🖼️ User ki gol profile photo (80% height)
                 if (profile.photo) {
                     try {
                         const avatarImg = new Image();
@@ -250,15 +251,15 @@ function createProfileStitchedBlob(imageUrl, profile) {
                 // ✍️ Naam aur Designation Text
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${Math.floor(cardHeight * 0.30)}px sans-serif`;
+                ctx.font = `bold ${Math.floor(cardHeight * 0.32)}px sans-serif`;
 
                 if (profile.tagline) {
                     ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.44);
                     ctx.fillStyle = '#cccccc';
-                    ctx.font = `${Math.floor(cardHeight * 0.20)}px sans-serif`;
-                    ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.74);
+                    ctx.font = `${Math.floor(cardHeight * 0.22)}px sans-serif`;
+                    ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.76);
                 } else {
-                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.58);
+                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.60);
                 }
 
                 // 🚀 Right Side BDS Logo
