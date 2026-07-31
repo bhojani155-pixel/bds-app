@@ -140,12 +140,11 @@ function closeProfileModal() {
     if (modal) modal.classList.remove('active');
 }
 window.closeProfileModal = closeProfileModal;
-
 // ==========================================
-// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - THODA AUR UPER)
+// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - SAFE OVERLAY POSITION)
 // ==========================================
 
-// 🔹 Rounded glass card banane ka helper function
+// 🔹 राउंडेड ग्लास कार्ड बनाने का हेल्पर फंक्शन
 function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
     ctx.save();
     ctx.beginPath();
@@ -158,8 +157,6 @@ function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle
         ctx.lineTo(x + width, y + height - radius);
         ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
         ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
         ctx.quadraticCurveTo(x, y, x + radius, y);
     }
     ctx.closePath();
@@ -184,22 +181,23 @@ function createProfileStitchedBlob(imageUrl, profile) {
             canvas.width = img.width;
             canvas.height = img.height;
 
-            // 1. Mukhya photo draw karein
+            // 1. मुख्य फोटो ड्रा करें
             ctx.drawImage(img, 0, 0);
 
-            // 2. Profile card (yadi user ka naam saved hai)
+            // 2. प्रोफाइल कार्ड (यदि यूजर का नाम सेव है)
             if (profile && profile.name) {
-                // 📐 Card Height 13% aur Bottom Margin 7% (Thoda aur upar khiska diya)
-                const cardHeight = Math.floor(canvas.height * 0.13);
+                // 📐 WhatsApp Caption Safe Zone:
+                // Bottom Margin को 33% कर दिया है ताकि WhatsApp के Caption Text के ऊपर कार्ड दिखे
+                const cardHeight = Math.floor(canvas.height * 0.12);
                 const marginX = Math.floor(canvas.width * 0.035);
-                const marginBottom = Math.floor(canvas.height * 0.07); // 👈 7% Upar utha diya
+                const marginBottom = Math.floor(canvas.height * 0.33); // 👈 WhatsApp टेक्स्ट ओवरले से ऊपर खिसकाया
 
                 const cardWidth = canvas.width - (marginX * 2);
                 const cardX = marginX;
                 const cardY = canvas.height - cardHeight - marginBottom;
                 const borderRadius = Math.floor(cardHeight * 0.20);
 
-                // 🌙 Transparent dark glass background card
+                // 🌙 ट्रांसपेरेंट डार्क ग्लास बैकग्राउंड कार्ड
                 drawCanvasCard(
                     ctx,
                     cardX,
@@ -207,13 +205,13 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     cardWidth,
                     cardHeight,
                     borderRadius,
-                    'rgba(0, 0, 0, 0.82)',
-                    'rgba(255, 255, 255, 0.25)'
+                    'rgba(0, 0, 0, 0.85)',
+                    'rgba(255, 255, 255, 0.3)'
                 );
 
                 let textXOffset = cardX + cardHeight * 0.35;
 
-                // 🖼️ User ki bada gol profile photo (82% height)
+                // 🖼️ यूजर की गोल प्रोफाइल फोटो (82% height)
                 if (profile.photo) {
                     try {
                         const avatarImg = new Image();
@@ -235,7 +233,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                             ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
                             ctx.restore();
 
-                            // Photo ke charo taraf neeli border
+                            // फोटो के चारों तरफ नीली बॉर्डर
                             ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
                             ctx.strokeStyle = '#00a2ff';
                             ctx.beginPath();
@@ -247,7 +245,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     } catch (e) { console.log('Avatar stitch error:', e); }
                 }
 
-                // ✍️ User ka naam aur designation
+                // ✍️ यूजर का नाम और पद (Designation)
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#ffffff';
                 ctx.font = `bold ${Math.floor(cardHeight * 0.30)}px sans-serif`;
@@ -261,7 +259,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.58);
                 }
 
-                // 🚀 Right side BDS brand logo
+                // 🚀 दाएं तरफ BDS ब्रांड लोगो
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
                 ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
                 ctx.textAlign = 'right';
@@ -278,7 +276,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
     });
 }
 
-// 🌐 Smart app link
+// 🌐 स्मार्ट ऐप लिंक
 const isLocal = window.location.hostname === "localhost" || 
                 window.location.hostname === "127.0.0.1" || 
                 window.location.protocol === "file:";
@@ -287,7 +285,7 @@ const YOUR_APP_URL = isLocal
     ? "https://bds-app-olive.vercel.app/" 
     : (window.location.origin + window.location.pathname);
 
-// 📤 Smart share function
+// 📤 स्मार्ट शेयर फ़ंक्शन
 async function shareMediaContent(type, mediaUrlOrText) {
     const userLang = getAppLanguage();
     const appTitle = "Bhojani Daily Status";
@@ -298,7 +296,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
 
     const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${YOUR_APP_URL}`;
 
-    // 1. Keval text status share
+    // 1. केवल टेक्स्ट स्टेटस शेयर
     if (type === 'text') {
         const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
         if (navigator.share) {
@@ -313,7 +311,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
         return;
     }
 
-    // 2. Photo aur video share
+    // 2. फोटो और वीडियो शेयर
     try {
         let file;
         const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
