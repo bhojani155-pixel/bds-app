@@ -142,8 +142,34 @@ function closeProfileModal() {
 window.closeProfileModal = closeProfileModal;
 
 // ==========================================
-// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - NO MOBILE NUMBER)
+// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - THODA AUR UPER)
 // ==========================================
+
+// 🔹 Rounded glass card banane ka helper function
+function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) {
+        ctx.roundRect(x, y, width, height, radius);
+    } else {
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillStyle;
+    ctx.fill();
+    ctx.lineWidth = Math.max(1.5, Math.floor(height * 0.02));
+    ctx.strokeStyle = strokeStyle;
+    ctx.stroke();
+    ctx.restore();
+}
 
 function createProfileStitchedBlob(imageUrl, profile) {
     return new Promise((resolve, reject) => {
@@ -158,18 +184,36 @@ function createProfileStitchedBlob(imageUrl, profile) {
             canvas.width = img.width;
             canvas.height = img.height;
 
-            // 1. मुख्य फोटो ड्रा करें
+            // 1. Mukhya photo draw karein
             ctx.drawImage(img, 0, 0);
 
-            // 2. प्रोफाइल स्ट्रिप (यदि यूजर का नाम सेव है)
+            // 2. Profile card (yadi user ka naam saved hai)
             if (profile && profile.name) {
-                const footerHeight = Math.floor(canvas.height * 0.12);
+                // 📐 Card Height 13% aur Bottom Margin 7% (Thoda aur upar khiska diya)
+                const cardHeight = Math.floor(canvas.height * 0.13);
+                const marginX = Math.floor(canvas.width * 0.035);
+                const marginBottom = Math.floor(canvas.height * 0.07); // 👈 7% Upar utha diya
 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.88)';
-                ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
+                const cardWidth = canvas.width - (marginX * 2);
+                const cardX = marginX;
+                const cardY = canvas.height - cardHeight - marginBottom;
+                const borderRadius = Math.floor(cardHeight * 0.20);
 
-                let textXOffset = footerHeight * 0.3;
+                // 🌙 Transparent dark glass background card
+                drawCanvasCard(
+                    ctx,
+                    cardX,
+                    cardY,
+                    cardWidth,
+                    cardHeight,
+                    borderRadius,
+                    'rgba(0, 0, 0, 0.82)',
+                    'rgba(255, 255, 255, 0.25)'
+                );
 
+                let textXOffset = cardX + cardHeight * 0.35;
+
+                // 🖼️ User ki bada gol profile photo (82% height)
                 if (profile.photo) {
                     try {
                         const avatarImg = new Image();
@@ -179,9 +223,9 @@ function createProfileStitchedBlob(imageUrl, profile) {
                         await new Promise(res => { avatarImg.onload = res; avatarImg.onerror = res; });
 
                         if (avatarImg.complete && avatarImg.naturalWidth > 0) {
-                            const avatarSize = footerHeight * 0.75;
-                            const avatarX = footerHeight * 0.2;
-                            const avatarY = canvas.height - footerHeight + (footerHeight - avatarSize) / 2;
+                            const avatarSize = cardHeight * 0.82; 
+                            const avatarX = cardX + cardHeight * 0.12;
+                            const avatarY = cardY + (cardHeight - avatarSize) / 2;
 
                             ctx.save();
                             ctx.beginPath();
@@ -191,28 +235,37 @@ function createProfileStitchedBlob(imageUrl, profile) {
                             ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
                             ctx.restore();
 
-                            ctx.lineWidth = Math.max(2, Math.floor(footerHeight * 0.03));
+                            // Photo ke charo taraf neeli border
+                            ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
                             ctx.strokeStyle = '#00a2ff';
                             ctx.beginPath();
                             ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
                             ctx.stroke();
 
-                            textXOffset = avatarX + avatarSize + footerHeight * 0.25;
+                            textXOffset = avatarX + avatarSize + cardHeight * 0.18;
                         }
                     } catch (e) { console.log('Avatar stitch error:', e); }
                 }
 
+                // ✍️ User ka naam aur designation
+                ctx.textAlign = 'left';
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${Math.floor(footerHeight * 0.30)}px sans-serif`;
+                ctx.font = `bold ${Math.floor(cardHeight * 0.30)}px sans-serif`;
 
                 if (profile.tagline) {
-                    ctx.fillText(profile.name, textXOffset, canvas.height - footerHeight * 0.52);
+                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.44);
                     ctx.fillStyle = '#cccccc';
-                    ctx.font = `${Math.floor(footerHeight * 0.22)}px sans-serif`;
-                    ctx.fillText(profile.tagline, textXOffset, canvas.height - footerHeight * 0.22);
+                    ctx.font = `${Math.floor(cardHeight * 0.20)}px sans-serif`;
+                    ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.74);
                 } else {
-                    ctx.fillText(profile.name, textXOffset, canvas.height - footerHeight * 0.38);
+                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.58);
                 }
+
+                // 🚀 Right side BDS brand logo
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+                ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
+                ctx.textAlign = 'right';
+                ctx.fillText('BDS', cardX + cardWidth - cardHeight * 0.25, cardY + cardHeight * 0.60);
             }
 
             canvas.toBlob(blob => {
@@ -224,7 +277,8 @@ function createProfileStitchedBlob(imageUrl, profile) {
         img.onerror = err => reject(err);
     });
 }
-// 🌐 स्मार्ट ऐप लिंक (लोकल सर्वर पर टेस्ट करते वक्त भी असली Vercel लिंक ही शेयर होगी)
+
+// 🌐 Smart app link
 const isLocal = window.location.hostname === "localhost" || 
                 window.location.hostname === "127.0.0.1" || 
                 window.location.protocol === "file:";
@@ -233,7 +287,7 @@ const YOUR_APP_URL = isLocal
     ? "https://bds-app-olive.vercel.app/" 
     : (window.location.origin + window.location.pathname);
 
-// 📤 स्मार्ट शेयर फ़ंक्शन (ऑटो-कॉपी एवं लिंक फिक्स के साथ)
+// 📤 Smart share function
 async function shareMediaContent(type, mediaUrlOrText) {
     const userLang = getAppLanguage();
     const appTitle = "Bhojani Daily Status";
@@ -244,7 +298,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
 
     const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${YOUR_APP_URL}`;
 
-    // 1. केवल टेक्स्ट स्टेटस शेयर
+    // 1. Keval text status share
     if (type === 'text') {
         const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
         if (navigator.share) {
@@ -259,7 +313,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
         return;
     }
 
-    // 2. फोटो और वीडियो शेयर
+    // 2. Photo aur video share
     try {
         let file;
         const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
@@ -275,7 +329,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
             file = new File([blob], fileName, { type: 'video/mp4' });
         }
 
-        // 💡 बैकअप ट्रिक: कैप्शन और लिंक को क्लिपबोर्ड में कॉपी करें
         try {
             if (navigator.clipboard) {
                 await navigator.clipboard.writeText(captionText);
@@ -284,7 +337,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
             console.log('Clipboard copy skipped');
         }
 
-        // एंड्रॉइड/आईओएस नेटिव शेयरिंग
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
@@ -292,7 +344,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
                 text: captionText
             });
         } else {
-            // अगर डायरेक्ट फ़ाइल शेयरिंग सपोर्ट न हो (डेस्कटॉप आदि पर)
             const downloadLink = document.createElement('a');
             downloadLink.href = URL.createObjectURL(file);
             downloadLink.download = fileName;
@@ -307,7 +358,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
     }
 }
 window.shareMediaContent = shareMediaContent;
-
 // ==========================================
 // 🚀 4. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
 // ==========================================
