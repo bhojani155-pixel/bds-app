@@ -142,10 +142,10 @@ function closeProfileModal() {
 window.closeProfileModal = closeProfileModal;
 
 // ==========================================
-// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - TOP HEADER BADGE)
+// 🎨 3. फोटो के TOP (ऊपर) पर प्रोफाइल प्रिंट करने का 100% सटीक कोड
 // ==========================================
 
-// 🔹 Round glass card banane ka helper function
+// 🔹 राउंडेड ग्लास कार्ड बनाने का हेल्पर फंक्शन
 function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
     ctx.save();
     ctx.beginPath();
@@ -178,108 +178,114 @@ function createProfileStitchedBlob(imageUrl, profile) {
         img.src = imageUrl;
 
         img.onload = async () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
 
-            canvas.width = img.width;
-            canvas.height = img.height;
+                canvas.width = img.width;
+                canvas.height = img.height;
 
-            // 1. Mukhya photo draw karein
-            ctx.drawImage(img, 0, 0);
+                // 1. मुख्य फोटो ड्रा करें
+                ctx.drawImage(img, 0, 0);
 
-            // 2. Profile card (yadi user ka naam saved hai)
-            if (profile && profile.name) {
-                // 📐 Position: TOP HEADER (Photo ke Upar 3% margin par)
-                // Isse Niche WhatsApp Caption / Link se bilkul koi takraav nahi hoga!
-                const cardHeight = Math.floor(canvas.height * 0.10);
-                const marginX = Math.floor(canvas.width * 0.035);
-                const marginTop = Math.floor(canvas.height * 0.03); // 👈 TOP Position
+                // 2. प्रोफाइल कार्ड (यदि यूजर का नाम सेव है)
+                if (profile && profile.name) {
+                    // 📐 TOP POSITION: कार्ड को फोटो के ऊपरी हिस्से (Top 3.5% margin) पर सेट किया गया है
+                    const cardHeight = Math.floor(canvas.height * 0.11); 
+                    const marginX = Math.floor(canvas.width * 0.035);    
+                    const marginTop = Math.floor(canvas.height * 0.035); 
 
-                const cardWidth = canvas.width - (marginX * 2);
-                const cardX = marginX;
-                const cardY = marginTop;
-                const borderRadius = Math.floor(cardHeight * 0.25);
+                    const cardWidth = canvas.width - (marginX * 2);
+                    const cardX = marginX;
+                    const cardY = marginTop; // 👈 हमेशा फोटो के ऊपर
+                    const borderRadius = Math.floor(cardHeight * 0.22);
 
-                // 🌙 Transparent dark glass background card
-                drawCanvasCard(
-                    ctx,
-                    cardX,
-                    cardY,
-                    cardWidth,
-                    cardHeight,
-                    borderRadius,
-                    'rgba(0, 0, 0, 0.78)',
-                    'rgba(255, 255, 255, 0.25)'
-                );
+                    // 🌙 ट्रांसपेरेंट डार्क ग्लास बैकग्राउंड कार्ड
+                    drawCanvasCard(
+                        ctx,
+                        cardX,
+                        cardY,
+                        cardWidth,
+                        cardHeight,
+                        borderRadius,
+                        'rgba(0, 0, 0, 0.82)',
+                        'rgba(255, 255, 255, 0.25)'
+                    );
 
-                let textXOffset = cardX + cardHeight * 0.35;
+                    let textXOffset = cardX + cardHeight * 0.35;
 
-                // 🖼️ User ki gol profile photo (80% height)
-                if (profile.photo) {
-                    try {
-                        const avatarImg = new Image();
-                        avatarImg.crossOrigin = 'anonymous';
-                        avatarImg.src = profile.photo;
+                    // 🖼️ गोल प्रोफाइल फोटो
+                    if (profile.photo) {
+                        try {
+                            const avatarImg = new Image();
+                            avatarImg.crossOrigin = 'anonymous';
+                            avatarImg.src = profile.photo;
 
-                        await new Promise(res => { avatarImg.onload = res; avatarImg.onerror = res; });
+                            await new Promise(res => { 
+                                avatarImg.onload = res; 
+                                avatarImg.onerror = res; 
+                            });
 
-                        if (avatarImg.complete && avatarImg.naturalWidth > 0) {
-                            const avatarSize = cardHeight * 0.80; 
-                            const avatarX = cardX + cardHeight * 0.12;
-                            const avatarY = cardY + (cardHeight - avatarSize) / 2;
+                            if (avatarImg.complete && avatarImg.naturalWidth > 0) {
+                                const avatarSize = cardHeight * 0.80; 
+                                const avatarX = cardX + cardHeight * 0.12;
+                                const avatarY = cardY + (cardHeight - avatarSize) / 2;
 
-                            ctx.save();
-                            ctx.beginPath();
-                            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-                            ctx.closePath();
-                            ctx.clip();
-                            ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
-                            ctx.restore();
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                                ctx.closePath();
+                                ctx.clip();
+                                ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+                                ctx.restore();
 
-                            // Neeli border line
-                            ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
-                            ctx.strokeStyle = '#00a2ff';
-                            ctx.beginPath();
-                            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-                            ctx.stroke();
+                                // नीली बॉर्डर
+                                ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
+                                ctx.strokeStyle = '#00a2ff';
+                                ctx.beginPath();
+                                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                                ctx.stroke();
 
-                            textXOffset = avatarX + avatarSize + cardHeight * 0.18;
-                        }
-                    } catch (e) { console.log('Avatar stitch error:', e); }
+                                textXOffset = avatarX + avatarSize + cardHeight * 0.18;
+                            }
+                        } catch (e) { console.log('Avatar stitch error:', e); }
+                    }
+
+                    // ✍️ नाम और पद
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `bold ${Math.floor(cardHeight * 0.32)}px sans-serif`;
+
+                    if (profile.tagline) {
+                        ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.44);
+                        ctx.fillStyle = '#cccccc';
+                        ctx.font = `${Math.floor(cardHeight * 0.22)}px sans-serif`;
+                        ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.76);
+                    } else {
+                        ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.60);
+                    }
+
+                    // 🚀 BDS ब्रांड लोगो
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+                    ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
+                    ctx.textAlign = 'right';
+                    ctx.fillText('BDS', cardX + cardWidth - cardHeight * 0.25, cardY + cardHeight * 0.60);
                 }
 
-                // ✍️ Naam aur Designation Text
-                ctx.textAlign = 'left';
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${Math.floor(cardHeight * 0.32)}px sans-serif`;
-
-                if (profile.tagline) {
-                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.44);
-                    ctx.fillStyle = '#cccccc';
-                    ctx.font = `${Math.floor(cardHeight * 0.22)}px sans-serif`;
-                    ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.76);
-                } else {
-                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.60);
-                }
-
-                // 🚀 Right Side BDS Logo
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-                ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
-                ctx.textAlign = 'right';
-                ctx.fillText('BDS', cardX + cardWidth - cardHeight * 0.25, cardY + cardHeight * 0.60);
+                canvas.toBlob(blob => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Canvas conversion failed'));
+                }, 'image/jpeg', 0.95);
+            } catch (err) {
+                reject(err);
             }
-
-            canvas.toBlob(blob => {
-                if (blob) resolve(blob);
-                else reject(new Error('Canvas conversion failed'));
-            }, 'image/jpeg', 0.95);
         };
 
         img.onerror = err => reject(err);
     });
 }
 
-// 🌐 Smart app link
+// 🌐 स्मार्ट ऐप लिंक
 const isLocal = window.location.hostname === "localhost" || 
                 window.location.hostname === "127.0.0.1" || 
                 window.location.protocol === "file:";
@@ -288,9 +294,9 @@ const YOUR_APP_URL = isLocal
     ? "https://bds-app-olive.vercel.app/" 
     : (window.location.origin + window.location.pathname);
 
-// 📤 Smart share function
+// 📤 स्मार्ट शेयर फ़ंक्शन
 async function shareMediaContent(type, mediaUrlOrText) {
-    const userLang = getAppLanguage();
+    const userLang = typeof getAppLanguage === 'function' ? getAppLanguage() : 'hindi';
     const appTitle = "Bhojani Daily Status";
 
     let shareMsg = userLang === "gujarati" 
@@ -299,7 +305,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
 
     const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${YOUR_APP_URL}`;
 
-    // 1. Keval text status share
+    // 1. केवल टेक्स्ट स्टेटस शेयर
     if (type === 'text') {
         const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
         if (navigator.share) {
@@ -314,7 +320,7 @@ async function shareMediaContent(type, mediaUrlOrText) {
         return;
     }
 
-    // 2. Photo aur video share
+    // 2. फोटो और वीडियो शेयर
     try {
         let file;
         const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
