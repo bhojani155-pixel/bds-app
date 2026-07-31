@@ -142,45 +142,10 @@ function closeProfileModal() {
 window.closeProfileModal = closeProfileModal;
 
 // ==========================================
-// 🎨 DYNAMIC TEXT DETECTION CANVAS STITCHING
+// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - TOP HEADER BADGE)
 // ==========================================
 
-// 🔹 फोटो में टेक्स्ट (ऊपर है या नीचे) पहचानने वाला स्मार्ट फंक्शन
-function detectBestCardPosition(ctx, width, height) {
-    try {
-        const sampleHeight = Math.floor(height * 0.30); // ऊपर और नीचे का 30-30% एरिया
-
-        function getContrastScore(yStart) {
-            const imgData = ctx.getImageData(0, yStart, width, sampleHeight);
-            const data = imgData.data;
-            let contrastScore = 0;
-
-            // स्पीड के लिए हर 8वें पिक्सल का कंट्रास्ट/एज चेक करें
-            for (let i = 0; i < data.length - 32; i += 32) {
-                const r1 = data[i],     g1 = data[i+1], b1 = data[i+2];
-                const r2 = data[i+16],    g2 = data[i+17], b2 = data[i+18];
-
-                // पास-पास के पिक्सल्स में बड़ा अंतर = टेक्स्ट की बॉर्डर/अक्षर
-                const diff = Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
-                if (diff > 90) { 
-                    contrastScore++;
-                }
-            }
-            return contrastScore;
-        }
-
-        const topScore = getContrastScore(0);
-        const bottomScore = getContrastScore(height - sampleHeight);
-
-        // अगर ऊपर कंट्रास्ट/टेक्स्ट ज्यादा है तो कार्ड नीचे रखें, वरना ऊपर
-        return topScore > bottomScore ? 'bottom' : 'top';
-    } catch (e) {
-        console.log("Detection error, defaulting to bottom:", e);
-        return 'bottom';
-    }
-}
-
-// 🔹 राउंडेड ग्लास कार्ड हेल्पर
+// 🔹 Round glass card banane ka helper function
 function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
     ctx.save();
     ctx.beginPath();
@@ -219,31 +184,23 @@ function createProfileStitchedBlob(imageUrl, profile) {
             canvas.width = img.width;
             canvas.height = img.height;
 
-            // 1. मुख्य फोटो ड्रा करें
+            // 1. Mukhya photo draw karein
             ctx.drawImage(img, 0, 0);
 
-            // 2. प्रोफाइल कार्ड (यदि यूजर का नाम सेव है)
+            // 2. Profile card (yadi user ka naam saved hai)
             if (profile && profile.name) {
-                // 🧠 टेक्स्ट पहचान कर कार्ड की पोजीशन तय करना (AUTO POSITION)
-                const position = detectBestCardPosition(ctx, canvas.width, canvas.height);
-
-                const cardHeight = Math.floor(canvas.height * 0.115);
+                // 📐 Position: TOP HEADER (Photo ke Upar 3% margin par)
+                // Isse Niche WhatsApp Caption / Link se bilkul koi takraav nahi hoga!
+                const cardHeight = Math.floor(canvas.height * 0.10);
                 const marginX = Math.floor(canvas.width * 0.035);
+                const marginTop = Math.floor(canvas.height * 0.03); // 👈 TOP Position
+
                 const cardWidth = canvas.width - (marginX * 2);
                 const cardX = marginX;
+                const cardY = marginTop;
+                const borderRadius = Math.floor(cardHeight * 0.25);
 
-                let cardY;
-                if (position === 'top') {
-                    // अगर नीचे टेक्स्ट है, तो कार्ड ऊपर (Top) जाएगा
-                    cardY = Math.floor(canvas.height * 0.03);
-                } else {
-                    // अगर ऊपर टेक्स्ट है, तो कार्ड नीचे (Bottom) रहेगा
-                    cardY = canvas.height - cardHeight - Math.floor(canvas.height * 0.025);
-                }
-
-                const borderRadius = Math.floor(cardHeight * 0.20);
-
-                // 🌙 डार्क ग्लास बैकग्राउंड कार्ड
+                // 🌙 Transparent dark glass background card
                 drawCanvasCard(
                     ctx,
                     cardX,
@@ -251,13 +208,13 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     cardWidth,
                     cardHeight,
                     borderRadius,
-                    'rgba(0, 0, 0, 0.85)',
+                    'rgba(0, 0, 0, 0.78)',
                     'rgba(255, 255, 255, 0.25)'
                 );
 
                 let textXOffset = cardX + cardHeight * 0.35;
 
-                // 🖼️ यूजर की गोल प्रोफाइल फोटो (80% size)
+                // 🖼️ User ki gol profile photo (80% height)
                 if (profile.photo) {
                     try {
                         const avatarImg = new Image();
@@ -279,7 +236,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                             ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
                             ctx.restore();
 
-                            // फोटो की बॉर्डर
+                            // Neeli border line
                             ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
                             ctx.strokeStyle = '#00a2ff';
                             ctx.beginPath();
@@ -291,21 +248,21 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     } catch (e) { console.log('Avatar stitch error:', e); }
                 }
 
-                // ✍️ नाम और पद
+                // ✍️ Naam aur Designation Text
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${Math.floor(cardHeight * 0.30)}px sans-serif`;
+                ctx.font = `bold ${Math.floor(cardHeight * 0.32)}px sans-serif`;
 
                 if (profile.tagline) {
                     ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.44);
                     ctx.fillStyle = '#cccccc';
-                    ctx.font = `${Math.floor(cardHeight * 0.20)}px sans-serif`;
-                    ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.74);
+                    ctx.font = `${Math.floor(cardHeight * 0.22)}px sans-serif`;
+                    ctx.fillText(profile.tagline, textXOffset, cardY + cardHeight * 0.76);
                 } else {
-                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.58);
+                    ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.60);
                 }
 
-                // 🚀 BDS ब्रांड लोगो
+                // 🚀 Right Side BDS Logo
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
                 ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
                 ctx.textAlign = 'right';
@@ -321,6 +278,87 @@ function createProfileStitchedBlob(imageUrl, profile) {
         img.onerror = err => reject(err);
     });
 }
+
+// 🌐 Smart app link
+const isLocal = window.location.hostname === "localhost" || 
+                window.location.hostname === "127.0.0.1" || 
+                window.location.protocol === "file:";
+
+const YOUR_APP_URL = isLocal 
+    ? "https://bds-app-olive.vercel.app/" 
+    : (window.location.origin + window.location.pathname);
+
+// 📤 Smart share function
+async function shareMediaContent(type, mediaUrlOrText) {
+    const userLang = getAppLanguage();
+    const appTitle = "Bhojani Daily Status";
+
+    let shareMsg = userLang === "gujarati" 
+        ? "આવા બીજા શાનદાર સ્ટેટસ જોવા માટે જુઓ:" 
+        : "ऐसे और शानदार स्टेटस देखने के लिए देखें:";
+
+    const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${YOUR_APP_URL}`;
+
+    // 1. Keval text status share
+    if (type === 'text') {
+        const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: appTitle, text: fullText });
+            } catch (err) {
+                if (err.name !== 'AbortError') window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+            }
+        } else {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullText)}`, '_blank');
+        }
+        return;
+    }
+
+    // 2. Photo aur video share
+    try {
+        let file;
+        const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
+
+        if (type === 'photo') {
+            const savedProfile = localStorage.getItem('bds_user_profile');
+            const profile = savedProfile ? JSON.parse(savedProfile) : null;
+            const imageBlob = await createProfileStitchedBlob(mediaUrlOrText, profile);
+            file = new File([imageBlob], fileName, { type: 'image/jpeg' });
+        } else {
+            const response = await fetch(mediaUrlOrText);
+            const blob = await response.blob();
+            file = new File([blob], fileName, { type: 'video/mp4' });
+        }
+
+        try {
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(captionText);
+            }
+        } catch (clipErr) {
+            console.log('Clipboard copy skipped');
+        }
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: appTitle,
+                text: captionText
+            });
+        } else {
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(file);
+            downloadLink.download = fileName;
+            downloadLink.click();
+            alert('✅ फोटो गैलरी में सेव हो गई है और ऐप लिंक कॉपी हो गया है!');
+        }
+    } catch (err) {
+        console.error('Sharing Error:', err);
+        if (err.name !== 'AbortError') {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText + "\n" + mediaUrlOrText)}`, '_blank');
+        }
+    }
+}
+window.shareMediaContent = shareMediaContent;
 // 🚀 4. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
 // ==========================================
 
