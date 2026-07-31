@@ -142,10 +142,10 @@ function closeProfileModal() {
 window.closeProfileModal = closeProfileModal;
 
 // ==========================================
-// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - THODA AUR UPER)
+// 🎨 3. फोटो पर प्रोफाइल प्रिंट करके शेयर करना (CANVAS STITCHING - FIXED BOTTOM POSITION)
 // ==========================================
 
-// 🔹 Rounded glass card banane ka helper function
+// 🔹 Round glass card banane ka helper function
 function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
     ctx.save();
     ctx.beginPath();
@@ -189,10 +189,10 @@ function createProfileStitchedBlob(imageUrl, profile) {
 
             // 2. Profile card (yadi user ka naam saved hai)
             if (profile && profile.name) {
-                // 📐 Card Height 13% aur Bottom Margin 7% (Thoda aur upar khiska diya)
-                const cardHeight = Math.floor(canvas.height * 0.13);
+                // 📐 Position: Card Height 11.5% aur Bottom Margin 2.5% (Niche ki taraf)
+                const cardHeight = Math.floor(canvas.height * 0.115);
                 const marginX = Math.floor(canvas.width * 0.035);
-                const marginBottom = Math.floor(canvas.height * 0.07); // 👈 7% Upar utha diya
+                const marginBottom = Math.floor(canvas.height * 0.025); // 👈 Bilkul niche set kiya taaki text na kate
 
                 const cardWidth = canvas.width - (marginX * 2);
                 const cardX = marginX;
@@ -207,13 +207,13 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     cardWidth,
                     cardHeight,
                     borderRadius,
-                    'rgba(0, 0, 0, 0.82)',
+                    'rgba(0, 0, 0, 0.85)',
                     'rgba(255, 255, 255, 0.25)'
                 );
 
                 let textXOffset = cardX + cardHeight * 0.35;
 
-                // 🖼️ User ki bada gol profile photo (82% height)
+                // 🖼️ User ki bada gol profile photo (80% height)
                 if (profile.photo) {
                     try {
                         const avatarImg = new Image();
@@ -223,7 +223,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                         await new Promise(res => { avatarImg.onload = res; avatarImg.onerror = res; });
 
                         if (avatarImg.complete && avatarImg.naturalWidth > 0) {
-                            const avatarSize = cardHeight * 0.82; 
+                            const avatarSize = cardHeight * 0.80; 
                             const avatarX = cardX + cardHeight * 0.12;
                             const avatarY = cardY + (cardHeight - avatarSize) / 2;
 
@@ -235,7 +235,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                             ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
                             ctx.restore();
 
-                            // Photo ke charo taraf neeli border
+                            // Neeli border line
                             ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
                             ctx.strokeStyle = '#00a2ff';
                             ctx.beginPath();
@@ -247,7 +247,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     } catch (e) { console.log('Avatar stitch error:', e); }
                 }
 
-                // ✍️ User ka naam aur designation
+                // ✍️ Naam aur Designation Text
                 ctx.textAlign = 'left';
                 ctx.fillStyle = '#ffffff';
                 ctx.font = `bold ${Math.floor(cardHeight * 0.30)}px sans-serif`;
@@ -261,7 +261,7 @@ function createProfileStitchedBlob(imageUrl, profile) {
                     ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.58);
                 }
 
-                // 🚀 Right side BDS brand logo
+                // 🚀 Right Side BDS Logo
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
                 ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
                 ctx.textAlign = 'right';
@@ -358,7 +358,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
     }
 }
 window.shareMediaContent = shareMediaContent;
-// ==========================================
 // 🚀 4. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
 // ==========================================
 
