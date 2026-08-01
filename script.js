@@ -404,7 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.currentAppLang = currentAppLang;
 
     let currentTab = localStorage.getItem("bds_current_tab") || "videos";
-    let currentCategory = "love";
+    let currentCategory = "bhakti";
     let videoObserver = null;
 
     let cloudResources = [];
@@ -1013,12 +1013,12 @@ modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); chan
     document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
         btn.addEventListener("click", e => {
             const btnId = e.currentTarget.id.toLowerCase();
-            if (btnId.includes("love")) currentCategory = "love";
+            if (btnId.includes("bhakti")) currentCategory = "bhakti";
             else if (btnId.includes("sad")) currentCategory = "sad";
             else if (btnId.includes("motivation")) currentCategory = "motivation";
             else if (btnId.includes("fav")) currentCategory = "favorites";
-            else if (btnId.includes("bhakti")) currentCategory = "bhakti";
-            else currentCategory = e.currentTarget.getAttribute("data-cat") || "love";
+            else if (btnId.includes("love")) currentCategory = "love";
+            else currentCategory = e.currentTarget.getAttribute("data-cat") || "bhakti";
             refreshContent();
         });
     });
