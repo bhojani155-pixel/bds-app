@@ -369,7 +369,7 @@ window.shareMediaContent = shareMediaContent;
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    const cloudName = "gkbhojani";
+   const cloudName = "dailystatus-bds";
 
     const appLanguageData = {
         hindi: {
@@ -686,17 +686,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 align-items: center !important; box-sizing: border-box !important;
             `;
 
-            modal.innerHTML = `
-                <button id="lb-prev-btn" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❮</button>
-                <img id="custom-lightbox-img" src="" alt="Photo" style="max-width: 95%; max-height: 78vh; object-fit: contain; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6);">
-                <button id="lb-next-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; border: none; font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);">❯</button>
-                <div id="lightbox-actions" style="margin-top: 18px; display: flex; gap: 12px; z-index: 1000000;"></div>
-            `;
-            document.body.appendChild(modal);
+           modal.innerHTML = `
+    <button id="lb-prev-btn" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; border: 1px solid rgba(255, 255, 255, 0.3); font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">❮</button>
+    <img id="custom-lightbox-img" src="" alt="Photo" style="max-width: 95%; max-height: 78vh; object-fit: contain; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.6);">
+    <button id="lb-next-btn" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; border: 1px solid rgba(255, 255, 255, 0.3); font-size: 22px; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 1000000; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">❯</button>
+    <div id="lightbox-actions" style="margin-top: 18px; display: flex; gap: 12px; z-index: 1000000;"></div>
+`;
+document.body.appendChild(modal);
 
-            modal.querySelector("#lb-prev-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(-1); };
-            modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(1); };
-
+modal.querySelector("#lb-prev-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(-1); };
+modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); changeLightboxPhoto(1); };
             let touchStartX = 0;
             modal.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
             modal.addEventListener('touchend', (e) => {
