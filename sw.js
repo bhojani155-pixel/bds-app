@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bhojani-status-v1.5';
+const CACHE_NAME = 'bhojani-status-v1.6';
 
 // 1. सभी ज़रूरी फाइलों के पाथ
 const ASSETS = [

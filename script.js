@@ -1067,7 +1067,15 @@ function updateThemeButtonUI(isLight) {
         btn.innerHTML = isLight ? '🌙 Dark' : '☀️ Light';
     }
 }
-
+//play stor reting//
+function rateApp() {
+    // अपनी Play Store की लिंक यहाँ डालें (जब ऐप प्ले स्टोर पर लाइव हो जाए)
+    // अभी के लिए यह आपकी वेबसाइट / प्ले स्टोर का लिंक ओपन करेगा
+    const playStoreUrl = "https://play.google.com/store/apps/details?id=com.bhojani.dailystatus"; 
+    
+    // अगर मोबाइल ऐप में चल रहा है या वेब में, सीधे लिंक खोलेगा
+    window.open(playStoreUrl, "_blank");
+}
 // 🚀 पेज लोड होते ही थीम और बटन सेट करें
 document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('userTheme');
@@ -1091,6 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.onclick = toggleTheme;
     }
 });
+
 // ==========================================
 // 📲 5. सर्विस वर्कर (PWA Offline)
 // ==========================================
