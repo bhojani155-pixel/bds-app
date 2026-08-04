@@ -80,14 +80,14 @@
            background: linear-gradient(135deg, #00c6ff, #ff0090) !important;
             color: #ffffff !important;
             border: 1px solid rgba(22, 173, 158, 0.2) !important;
-            padding: 7px 14px !important;
-            font-size: 13px !important;
+            padding: 5px 12px !important;
+            font-size: 12px !important;
             font-weight: 700 !important;
-            border-radius: 25px !important;
+            border-radius: 23px !important;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             box-shadow: 0 4px 12px rgba(30, 60, 114, 0.4) !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
@@ -287,29 +287,36 @@ body:not(.light-mode) .chip.btn-category {
 </head>
 <body>
 
-    <!-- Header Section -->
-    <div class="brand-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
+   <!-- 👑 पूरा हेडर रैपर -->
+<div class="main-header-wrapper">
+    
+    <!-- 🔴 पहली लाइन: ब्रांड बॉक्स (Left) + लाइट मोड बटन (Right) -->
+    <div class="top-header-row">
+        <div class="brand-box">
             <div class="brand-logo">BDS</div>
-            <div class="brand-title">
+            <div class="brand-text">
                 <h2>Bhojani Daily Status</h2>
                 <small>BY BHOJANI DIGITAL SEVA</small>
             </div>
         </div>
 
-        <div class="header-actions">
-            <!-- क्लासिक लुक प्रोफाइल बटन -->
-            <button class="profile-btn" onclick="openProfileModal()">👤 प्रोफाइल</button>
-            
-            <div class="lang-toggle-container">
-                <button id="btnLangHindi" class="lang-toggle-btn active" onclick="toggleLanguage('hindi')">🇮🇳 हिंदी</button>
-                <button id="btnLangGujarati" class="lang-toggle-btn" onclick="toggleLanguage('gujarati')">📿 ગુજરાતી</button>
-            </div>
-            
-            <button id="darkModeBtn" class="btn-dark-toggle">🌙</button>
-            <button id="appShareBtn" class="top-action-btn">🔗 शेयर</button>
-        </div>
+        <button id="darkModeBtn" class="btn-dark-toggle">☀️ Light</button>
     </div>
+
+    <!-- 🔵 दूसरी लाइन: भोजानी लोगो के नीचे वाले सारे बटन (100% एक ही लाइन में) -->
+    <div class="header-actions">
+        <button class="profile-btn" onclick="openProfileModal()">👤 प्रोफाइल</button>
+        
+        <div class="lang-toggle-container">
+            <button id="btnLangHindi" class="lang-toggle-btn active" onclick="toggleLanguage('hindi')">🇮🇳 हिंदी</button>
+            <button id="btnLangGujarati" class="lang-toggle-btn" onclick="toggleLanguage('gujarati')">📿 ગુજરાતી</button>
+        </div>
+
+        <button id="appShareBtn" class="top-action-btn">🔗 शेयर</button>
+        <button id="appRateBtn" class="top-action-btn" onclick="rateApp()">⭐ रेट करें</button>
+    </div>
+
+</div>
 
     <!-- Navigation Bar -->
     <div class="main-navbar">

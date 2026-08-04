@@ -16,16 +16,6 @@ body {
     display: none;
 }
 
-.brand-header {
-    display: flex;
-    flex-wrap: wrap; /* जगह कम पड़ने पर नीचे आ जाएगा */
-    padding: 10px;
-    gap: 10px;
-    align-items: center;
-    background: #007bff; /* आपका नीला बैकग्राउंड */
-    color: white;
-}
-
 .brand-logo {
     width: 33px;
     height: 33px;
@@ -790,4 +780,62 @@ body.light-mode .brand-header {
 body.light-mode .chip.btn-category {
     background-color: #e2e8f0 !important;
     color: #1a202c !important;
+}
+
+
+
+/* 1. पूरी मुख्य रो (ऊपर-नीचे का पैडिंग 10px से घटाकर 4px किया) */
+.top-header-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100%;
+    gap: 8px;
+    padding: 4px 10px !important; /* 👈 हाइट कम करने के लिए */
+    box-sizing: border-box;
+}
+
+/* 2. 📦 ब्रांड बॉक्स (पैडिंग 8px से घटाकर 4px की) */
+.brand-box {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(28, 130, 93, 0.2);
+    padding: 4px 8px !important; /* 👈 ऊपर-नीचे की पैडिंग कम की */
+    border-radius: 8px !important;
+    flex-shrink: 0;
+}
+
+/* 3. 🏷️ BDS लोगो (इसकी पैडिंग और फ़ॉन्ट भी थोड़ा कॉम्पैक्ट किया) */
+.brand-logo {
+    padding: 4px 8px !important;
+    font-size: 13px !important;
+    border-radius: 6px !important;
+}
+
+/* 4. 📝 टेक्स्ट का गैप और साइज़ एडजस्टमेंट */
+.brand-text h2 {
+    font-size: 14px !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+}
+
+.brand-text small {
+    font-size: 9px !important;
+    line-height: 1 !important;
+}
+/* 🔘 बाजू वाला डिब्बा (जहाँ आप बटन पेस्ट करेंगे) */
+.side-buttons-area {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important; /* बटनों के बीच की दूरी */
+    flex-wrap: nowrap;
+}
+/* 🔘 दूसरी लाइन के सभी बटनों का साइज़ थोड़ा छोटा और फिट करने के लिए */
+.header-actions .profile-btn,
+.header-actions .lang-toggle-btn,
+.header-actions .top-action-btn {
+    padding: 6px 9px !important;
+    font-size: 11px !important;
 }
