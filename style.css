@@ -836,6 +836,7 @@ body.light-mode .chip.btn-category {
 .header-actions .profile-btn,
 .header-actions .lang-toggle-btn,
 .header-actions .top-action-btn {
+     gap: 1px !important;
     padding: 6px 9px !important;
     font-size: 11px !important;
 }
