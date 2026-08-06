@@ -1,13 +1,7 @@
 // ==========================================
 // 🌐 1. ग्लोबल हेल्पर्स एवं भाषा फंक्शंस
 // ==========================================
-//one signal //
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({
-    appId: "9278cc17-9628-42ef-ace6-cbef8e03f779",
-  });
-});
+
 // भाषा पता करने का सेफ फंक्शन
 function getAppLanguage() {
     const gujBtn = document.getElementById("btnLangGujarati");
@@ -21,6 +15,18 @@ function getAppLanguage() {
     return "hindi";
 }
 window.getAppLanguage = getAppLanguage;
+
+// OneSignal Init + Language Tag Setup
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "9278cc17-9628-42ef-ace6-cbef8e03f779",
+  });
+
+  // 🏷️ यूज़र की भाषा पता करके OneSignal में Tag सेट करना
+  const lang = getAppLanguage();
+  await OneSignal.User.addTag("user_lang", lang);
+});
 
 // 🗓️ तारीख से सीड बनाना और डेली शफल
 function getDailySeed() {
@@ -375,10 +381,14 @@ window.shareMediaContent = shareMediaContent;
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
-   const cloudName = "dailystatus-bds";
+    const cloudName = "dailystatus-bds";
 
+    // 🌐 सभी भाषा डेटा (प्रोफाइल, शेयर और रेट बटन को भी यहाँ जोड़ दिया गया है)
     const appLanguageData = {
         hindi: {
+            profileText: "👤 प्रोफाइल",
+            appShareBtn: "🔗 शेयर",
+            appRateBtn: "⭐ रेट करें",
             btnFavoritesText: "❤️ पसंदीदा", btnLoveText: "❤️ लव", btnSadText: "💔 सैड", btnMotivationText: "🚀 मोटिवेशन", btnBhaktiText: "🙏 भक्ति",
             btnFavoritesPhoto: "❤️ पसंदीदा", btnLovePhoto: "❤️ लव", btnSadPhoto: "💔 सैड", btnMotivationPhoto: "🚀 मोटिवेशन", btnBhaktiPhoto: "🙏 भक्ति",
             btnFavoritesVideo: "❤️ पसंदीदा", btnLoveVideo: "❤️ लव", btnSadVideo: "💔 सैड", btnMotivationVideo: "🚀 मोटिवेशन", btnBhaktiVideo: "🙏 भक्ति",
@@ -388,6 +398,9 @@ document.addEventListener("DOMContentLoaded", () => {
             noVideo: "<div style='color:#aaa; text-align:center; padding:50px; grid-column: span 4;'>कोई वीडियो नहीं मिला!</div>"
         },
         gujarati: {
+            profileText: "👤 પ્રોફાઇલ",
+            appShareBtn: "🔗 શેર કરો",
+            appRateBtn: "⭐ રેટ કરો",
             btnFavoritesText: "❤️ મનપસંદ", btnLoveText: "❤️ પ્રેમ", btnSadText: "💔 ઉદાસ", btnMotivationText: "🚀 પ્રેરણાત્મક", btnBhaktiText: "🙏 ભક્તિ",
             btnFavoritesPhoto: "❤️ મનપસંદ", btnLovePhoto: "❤️ પ્રેમ", btnSadPhoto: "💔 ઉદાસ", btnMotivationPhoto: "🚀 પ્રેરણાત્મક", btnBhaktiPhoto: "🙏 ભક્તિ",
             btnFavoritesVideo: "❤️ મનપસંદ", btnLoveVideo: "❤️ પ્રેમ", btnSadVideo: "💔 ઉદાસ", btnMotivationVideo: "🚀 પ્રેરણાત્મક", btnBhaktiVideo: "🙏 ભક્તિ",
@@ -472,6 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.body.classList.contains("fullscreen-active")) switchTab(currentTab);
     });
 
+    // 🌐 भाषा बदलने का मुख्य फ़ंक्शन (एकदम क्लीन)
     window.toggleLanguage = function (lang) {
         currentAppLang = lang;
         window.currentAppLang = lang;
@@ -484,20 +498,39 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btnGujarati) btnGujarati.classList.toggle("active", lang === "gujarati");
 
         updateAppLanguageUI();
-        refreshContent();
+        if (typeof refreshContent === "function") refreshContent();
+
+        // 🏷️ OneSignal में तुरंत भाषा का Tag अपडेट करने के लिए:
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(function(OneSignal) {
+            OneSignal.User.addTag("user_lang", lang);
+        });
     };
 
+    // 🎨 UI अपडेट करने का फ़ंक्शन (हेडर और बटनों के साथ)
     function updateAppLanguageUI() {
         const data = appLanguageData[currentAppLang];
         if (!data) return;
+
+        // ID से सभी बटनों का टेक्स्ट बदलें
         Object.keys(data).forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerText = data[id];
         });
+
+        // प्रोफाइल बटन क्लास से अपडेट करें
+        const profileBtn = document.querySelector('.profile-btn');
+        if (profileBtn && data.profileText) {
+            profileBtn.innerText = data.profileText;
+        }
+
         if (tabs.text) tabs.text.innerText = data.tabText;
         if (tabs.photos) tabs.photos.innerText = data.tabPhotos;
         if (tabs.videos) tabs.videos.innerText = data.tabVideos;
     }
+
+    // शुरुआती UI भाषा लोड करें
+    updateAppLanguageUI();
 
     function setupVideoObserver() {
         if (!document.body.classList.contains("fullscreen-active")) {

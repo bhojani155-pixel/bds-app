@@ -361,7 +361,18 @@ body:not(.light-mode) .chip.btn-category {
         </div>
         <div class="reels-container" id="reelsContainer"></div>
     </div>
+    <!-- 🔵 दूसरी लाइन: हेडर एक्शन्स -->
+<div class="header-actions">
+    <button class="profile-btn" onclick="openProfileModal()" data-i18n="profile">👤 प्रोफाइल</button>
     
+    <div class="lang-toggle-container">
+        <button id="btnLangHindi" class="lang-toggle-btn active" onclick="toggleLanguage('hindi')" data-i18n="lang_hindi">🇮🇳 हिंदी</button>
+        <button id="btnLangGujarati" class="lang-toggle-btn" onclick="toggleLanguage('gujarati')" data-i18n="lang_gujarati">📿 ગુજરાતી</button>
+    </div>
+
+    <button id="appShareBtn" class="top-action-btn" data-i18n="share">🔗 शेयर</button>
+    <button id="appRateBtn" class="top-action-btn" onclick="rateApp()" data-i18n="rate">⭐ रेट करें</button>
+</div>
     <!-- प्रोफाइल मोडल POPUP -->
     <div id="profileModal" class="profile-modal-overlay">
         <div class="profile-modal-card">
