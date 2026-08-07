@@ -1,8 +1,6 @@
 // ==========================================
-// 🌐 1. ग्लोबल हेल्पर्स एवं भाषा फंक्शंस
+// 🌐 1. भाषा पता करने का सेफ फंक्शन
 // ==========================================
-
-// भाषा पता करने का सेफ फंक्शन
 function getAppLanguage() {
     const gujBtn = document.getElementById("btnLangGujarati");
     if (gujBtn && gujBtn.classList.contains("active")) return "gujarati";
@@ -16,16 +14,59 @@ function getAppLanguage() {
 }
 window.getAppLanguage = getAppLanguage;
 
-// OneSignal Init + Language Tag Setup
+
+// ==========================================
+// 🔔 2. OneSignal Init + Automatic Tag Setup
+// ==========================================
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({
-    appId: "9278cc17-9628-42ef-ace6-cbef8e03f779",
-  });
+    await OneSignal.init({
+        appId: "9278cc17-9628-42ef-ace6-cbef8e03f779",
+    });
 
-  // 🏷️ यूज़र की भाषा पता करके OneSignal में Tag सेट करना
-  const lang = getAppLanguage();
-  await OneSignal.User.addTag("user_lang", lang);
+    // पेज लोड होते ही यूज़र की भाषा का Tag सेट करना
+    const currentLang = getAppLanguage();
+    if (OneSignal.User) {
+        await OneSignal.User.addTag("user_lang", currentLang);
+        console.log("OneSignal Tag Set on Load:", currentLang);
+    }
+});
+
+
+// ==========================================
+// 🏷️ 3. भाषा बदलने पर OneSignal Tag अपडेट करने का फंक्शन
+// ==========================================
+function updateOneSignalLang(newLang) {
+    if (window.OneSignalDeferred) {
+        OneSignalDeferred.push(async function(OneSignal) {
+            if (OneSignal.User) {
+                await OneSignal.User.addTag("user_lang", newLang);
+                console.log("OneSignal Tag Updated to:", newLang);
+            }
+        });
+    }
+}
+
+// ==========================================
+// 🔘 4. बटन क्लिक इवेंट्स (Button Click Listeners)
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    const gujBtn = document.getElementById("btnLangGujarati");
+    const hinBtn = document.getElementById("btnLangHindi");
+
+    // जब यूज़र "गुजराती" बटन दबाए
+    if (gujBtn) {
+        gujBtn.addEventListener("click", () => {
+            updateOneSignalLang("gujarati");
+        });
+    }
+
+    // जब यूज़र "हिंदी" बटन दबाए
+    if (hinBtn) {
+        hinBtn.addEventListener("click", () => {
+            updateOneSignalLang("hindi");
+        });
+    }
 });
 
 // 🗓️ तारीख से सीड बनाना और डेली शफल
@@ -1138,19 +1179,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.onclick = toggleTheme;
     }
 });
-
 // ==========================================
 // 📲 5. सर्विस वर्कर (PWA Offline)
 // ==========================================
-
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then((registration) => {
             registration.onupdatefound = () => {
                 const installingWorker = registration.installing;
+                if (!installingWorker) return;
+
                 installingWorker.onstatechange = () => {
                     if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // नया वर्कर बैकग्राउंड में तैयार है
+                        console.log("New update available.");
+                        
+                        // अगर यूजर OK दबाता है, तो नया SW एक्टिवेट करके रीलोड करें
                         if (confirm('नया अपडेट उपलब्ध है! ऐप को अपडेट करने के लिए OK दबाएं।')) {
+                            installingWorker.postMessage({ action: 'skipWaiting' });
                             window.location.reload();
                         }
                     }
@@ -1158,7 +1204,15 @@ if ('serviceWorker' in navigator) {
             };
         }).catch(err => console.error("SW Registration failed:", err));
     });
-}
 
+    // नए वर्कर के टेक-ओवर (Takeover) करने पर ही पेज रीलोड होगा
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+        }
+    });
+}
 window.addEventListener('offline', () => alert("अरे! इंटरनेट कनेक्शन चेक करें।"));
 window.addEventListener('online', () => alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।"));
