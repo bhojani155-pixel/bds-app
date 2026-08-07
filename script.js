@@ -34,42 +34,8 @@ OneSignalDeferred.push(async function(OneSignal) {
 
 
 // ==========================================
-// 🏷️ 3. भाषा बदलने पर OneSignal Tag अपडेट करने का फंक्शन
+// 🗓️ 3. तारीख से सीड बनाना और डेली शफल
 // ==========================================
-function updateOneSignalLang(newLang) {
-    if (window.OneSignalDeferred) {
-        OneSignalDeferred.push(async function(OneSignal) {
-            if (OneSignal.User) {
-                await OneSignal.User.addTag("user_lang", newLang);
-                console.log("OneSignal Tag Updated to:", newLang);
-            }
-        });
-    }
-}
-
-// ==========================================
-// 🔘 4. बटन क्लिक इवेंट्स (Button Click Listeners)
-// ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-    const gujBtn = document.getElementById("btnLangGujarati");
-    const hinBtn = document.getElementById("btnLangHindi");
-
-    // जब यूज़र "गुजराती" बटन दबाए
-    if (gujBtn) {
-        gujBtn.addEventListener("click", () => {
-            updateOneSignalLang("gujarati");
-        });
-    }
-
-    // जब यूज़र "हिंदी" बटन दबाए
-    if (hinBtn) {
-        hinBtn.addEventListener("click", () => {
-            updateOneSignalLang("hindi");
-        });
-    }
-});
-
-// 🗓️ तारीख से सीड बनाना और डेली शफल
 function getDailySeed() {
     const today = new Date();
     return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
@@ -97,9 +63,8 @@ function shuffleArrayDaily(array) {
 }
 
 // ==========================================
-// 👤 2. प्रोफाइल सेटिंग्स एवं लाइव प्रीव्यू फ़ंक्शंस
+// 👤 4. प्रोफाइल सेटिंग्स एवं लाइव प्रीव्यू फ़ंक्शंस
 // ==========================================
-
 function previewPhoto(event) {
     const file = event ? event.target.files[0] : null;
     if (file) {
@@ -195,10 +160,8 @@ function closeProfileModal() {
 window.closeProfileModal = closeProfileModal;
 
 // ==========================================
-// 🎨 3. फोटो के TOP (ऊपर) पर प्रोफाइल प्रिंट करने का 100% सटीक कोड
+// 🎨 5. फोटो के TOP (ऊपर) पर प्रोफाइल प्रिंट करने का 100% सटीक कोड
 // ==========================================
-
-// 🔹 राउंडेड ग्लास कार्ड बनाने का हेल्पर फंक्शन
 function drawCanvasCard(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
     ctx.save();
     ctx.beginPath();
@@ -238,36 +201,25 @@ function createProfileStitchedBlob(imageUrl, profile) {
                 canvas.width = img.width;
                 canvas.height = img.height;
 
-                // 1. मुख्य फोटो ड्रा करें
                 ctx.drawImage(img, 0, 0);
 
-                // 2. प्रोफाइल कार्ड (यदि यूजर का नाम सेव है)
                 if (profile && profile.name) {
-                    // 📐 TOP POSITION: कार्ड को फोटो के ऊपरी हिस्से (Top 3.5% margin) पर सेट किया गया है
                     const cardHeight = Math.floor(canvas.height * 0.11); 
                     const marginX = Math.floor(canvas.width * 0.035);    
                     const marginTop = Math.floor(canvas.height * 0.035); 
 
                     const cardWidth = canvas.width - (marginX * 2);
                     const cardX = marginX;
-                    const cardY = marginTop; // 👈 हमेशा फोटो के ऊपर
+                    const cardY = marginTop;
                     const borderRadius = Math.floor(cardHeight * 0.22);
 
-                    // 🌙 ट्रांसपेरेंट डार्क ग्लास बैकग्राउंड कार्ड
                     drawCanvasCard(
-                        ctx,
-                        cardX,
-                        cardY,
-                        cardWidth,
-                        cardHeight,
-                        borderRadius,
-                        'rgba(0, 0, 0, 0.82)',
-                        'rgba(255, 255, 255, 0.25)'
+                        ctx, cardX, cardY, cardWidth, cardHeight, borderRadius,
+                        'rgba(0, 0, 0, 0.82)', 'rgba(255, 255, 255, 0.25)'
                     );
 
                     let textXOffset = cardX + cardHeight * 0.35;
 
-                    // 🖼️ गोल प्रोफाइल फोटो
                     if (profile.photo) {
                         try {
                             const avatarImg = new Image();
@@ -292,7 +244,6 @@ function createProfileStitchedBlob(imageUrl, profile) {
                                 ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
                                 ctx.restore();
 
-                                // नीली बॉर्डर
                                 ctx.lineWidth = Math.max(2, Math.floor(cardHeight * 0.035));
                                 ctx.strokeStyle = '#00a2ff';
                                 ctx.beginPath();
@@ -304,7 +255,6 @@ function createProfileStitchedBlob(imageUrl, profile) {
                         } catch (e) { console.log('Avatar stitch error:', e); }
                     }
 
-                    // ✍️ नाम और पद
                     ctx.textAlign = 'left';
                     ctx.fillStyle = '#ffffff';
                     ctx.font = `bold ${Math.floor(cardHeight * 0.32)}px sans-serif`;
@@ -318,7 +268,6 @@ function createProfileStitchedBlob(imageUrl, profile) {
                         ctx.fillText(profile.name, textXOffset, cardY + cardHeight * 0.60);
                     }
 
-                    // 🚀 BDS ब्रांड लोगो
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
                     ctx.font = `900 ${Math.floor(cardHeight * 0.36)}px sans-serif`;
                     ctx.textAlign = 'right';
@@ -358,7 +307,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
 
     const captionText = `✨ *${appTitle}* ✨\n${shareMsg}\n👉 ${YOUR_APP_URL}`;
 
-    // 1. केवल टेक्स्ट स्टेटस शेयर
     if (type === 'text') {
         const fullText = `"${mediaUrlOrText}"\n\n${captionText}`;
         if (navigator.share) {
@@ -373,7 +321,6 @@ async function shareMediaContent(type, mediaUrlOrText) {
         return;
     }
 
-    // 2. फोटो और वीडियो शेयर
     try {
         let file;
         const fileName = `bds_status_${Date.now()}.${type === 'photo' ? 'jpg' : 'mp4'}`;
@@ -418,13 +365,14 @@ async function shareMediaContent(type, mediaUrlOrText) {
     }
 }
 window.shareMediaContent = shareMediaContent;
-// 🚀 4. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
-// ==========================================
 
+
+// ==========================================
+// 🚀 6. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const cloudName = "dailystatus-bds";
 
-    // 🌐 सभी भाषा डेटा (प्रोफाइल, शेयर और रेट बटन को भी यहाँ जोड़ दिया गया है)
     const appLanguageData = {
         hindi: {
             profileText: "👤 प्रोफाइल",
@@ -526,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (document.body.classList.contains("fullscreen-active")) switchTab(currentTab);
     });
 
-    // 🌐 भाषा बदलने का मुख्य फ़ंक्शन (एकदम क्लीन)
+    // 🌐 भाषा बदलने का मुख्य फ़ंक्शन (एकदम क्लीन और OneSignal से लिंक्ड)
     window.toggleLanguage = function (lang) {
         currentAppLang = lang;
         window.currentAppLang = lang;
@@ -541,25 +489,37 @@ document.addEventListener("DOMContentLoaded", () => {
         updateAppLanguageUI();
         if (typeof refreshContent === "function") refreshContent();
 
-        // 🏷️ OneSignal में तुरंत भाषा का Tag अपडेट करने के लिए:
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        OneSignalDeferred.push(function(OneSignal) {
-            OneSignal.User.addTag("user_lang", lang);
-        });
+        // 🏷️ OneSignal में तुरंत भाषा का Tag अपडेट
+        if (window.OneSignalDeferred) {
+            OneSignalDeferred.push(async function(OneSignal) {
+                if (OneSignal.User) {
+                    await OneSignal.User.addTag("user_lang", lang);
+                    console.log("OneSignal Tag Updated to:", lang);
+                }
+            });
+        }
     };
 
-    // 🎨 UI अपडेट करने का फ़ंक्शन (हेडर और बटनों के साथ)
+    // बटन क्लिक से भाषा बदलने के इवेंट लिसनर्स 
+    const btnLangGujarati = document.getElementById("btnLangGujarati");
+    const btnLangHindi = document.getElementById("btnLangHindi");
+    
+    if (btnLangGujarati) {
+        btnLangGujarati.addEventListener("click", () => { window.toggleLanguage("gujarati"); });
+    }
+    if (btnLangHindi) {
+        btnLangHindi.addEventListener("click", () => { window.toggleLanguage("hindi"); });
+    }
+
     function updateAppLanguageUI() {
         const data = appLanguageData[currentAppLang];
         if (!data) return;
 
-        // ID से सभी बटनों का टेक्स्ट बदलें
         Object.keys(data).forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerText = data[id];
         });
 
-        // प्रोफाइल बटन क्लास से अपडेट करें
         const profileBtn = document.querySelector('.profile-btn');
         if (profileBtn && data.profileText) {
             profileBtn.innerText = data.profileText;
@@ -570,7 +530,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tabs.videos) tabs.videos.innerText = data.tabVideos;
     }
 
-    // शुरुआती UI भाषा लोड करें
     updateAppLanguageUI();
 
     function setupVideoObserver() {
@@ -1115,15 +1074,18 @@ modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); chan
         };
     }
 
-    toggleLanguage(currentAppLang);
+    // शुरुआती भाषा सेट करना
+    window.toggleLanguage(currentAppLang);
     switchTab(currentTab);
 });
-// 🔄 यूनिवर्सल थीम टॉगल फंक्शन
+
+
+// ==========================================
+// 🌙 7. थीम टॉगल और रेटिंग फंक्शन
+// ==========================================
 function toggleTheme() {
-    // 1. body पर क्लास स्विच करें
     const isLightNow = document.body.classList.toggle('light-mode');
     
-    // अगर आपकी पुरानी CSS 'dark-mode' इस्तेमाल करती है, तो उसे भी हैंडल करें
     if (isLightNow) {
         document.body.classList.remove('dark-mode');
         localStorage.setItem('userTheme', 'light');
@@ -1132,13 +1094,10 @@ function toggleTheme() {
         localStorage.setItem('userTheme', 'dark');
     }
 
-    // 2. बटन का टेक्स्ट/आइकन बदलें
     updateThemeButtonUI(isLightNow);
 }
 
-// बटन का टेक्स्ट अपडेट करने का फ़ंक्शन
 function updateThemeButtonUI(isLight) {
-    // आपकी ऐप में बटन की जो भी क्लास/ID हो, यह सबको ढूँढ लेगा
     const btn = document.querySelector('.btn-dark-toggle') || 
                 document.querySelector('.theme-btn') || 
                 document.getElementById('themeBtn');
@@ -1147,16 +1106,12 @@ function updateThemeButtonUI(isLight) {
         btn.innerHTML = isLight ? '🌙 Dark' : '☀️ Light';
     }
 }
-//play stor reting//
+
 function rateApp() {
-    // अपनी Play Store की लिंक यहाँ डालें (जब ऐप प्ले स्टोर पर लाइव हो जाए)
-    // अभी के लिए यह आपकी वेबसाइट / प्ले स्टोर का लिंक ओपन करेगा
     const playStoreUrl = "https://play.google.com/store/apps/details?id=com.bhojani.dailystatus"; 
-    
-    // अगर मोबाइल ऐप में चल रहा है या वेब में, सीधे लिंक खोलेगा
     window.open(playStoreUrl, "_blank");
 }
-// 🚀 पेज लोड होते ही थीम और बटन सेट करें
+
 document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('userTheme');
     
@@ -1170,7 +1125,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateThemeButtonUI(false);
     }
 
-    // किसी भी डार्क/लाइट बटन पर अपने-आप क्लिक इवेंट जोड़ें
     const btn = document.querySelector('.btn-dark-toggle') || 
                 document.querySelector('.theme-btn') || 
                 document.getElementById('themeBtn');
@@ -1179,40 +1133,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.onclick = toggleTheme;
     }
 });
+
+
 // ==========================================
-// 📲 5. सर्विस वर्कर (PWA Offline)
+// 📲 8. सर्विस वर्कर (केवल शांत तरीके से रजिस्टर होगा)
 // ==========================================
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then((registration) => {
-            registration.onupdatefound = () => {
-                const installingWorker = registration.installing;
-                if (!installingWorker) return;
-
-                installingWorker.onstatechange = () => {
-                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // नया वर्कर बैकग्राउंड में तैयार है
-                        console.log("New update available.");
-                        
-                        // अगर यूजर OK दबाता है, तो नया SW एक्टिवेट करके रीलोड करें
-                        if (confirm('नया अपडेट उपलब्ध है! ऐप को अपडेट करने के लिए OK दबाएं।')) {
-                            installingWorker.postMessage({ action: 'skipWaiting' });
-                            window.location.reload();
-                        }
-                    }
-                };
-            };
+            console.log("Service Worker Successfully Registered.");
         }).catch(err => console.error("SW Registration failed:", err));
     });
-
-    // नए वर्कर के टेक-ओवर (Takeover) करने पर ही पेज रीलोड होगा
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
-        }
-    });
 }
+
 window.addEventListener('offline', () => alert("अरे! इंटरनेट कनेक्शन चेक करें।"));
 window.addEventListener('online', () => alert("वापस ऑनलाइन! अब आप डेटा देख सकते हैं।"));

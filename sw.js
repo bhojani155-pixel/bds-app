@@ -1,4 +1,7 @@
-const CACHE_NAME = 'bhojani-status-v1.6';
+
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
+const CACHE_NAME = 'bhojani-status-v1.7';
 
 // 1. सभी ज़रूरी फाइलों के पाथ
 const ASSETS = [
