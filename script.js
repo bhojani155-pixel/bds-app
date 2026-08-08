@@ -29,11 +29,26 @@ async function loadFestivalStatuses() {
         let response = await fetch('festivals.json');
         let festivals = await response.json();
         
-        let currentLang = localStorage.getItem('user_lang') || 'hindi';
+        let currentLang = localStorage.getItem('user_app_lang') || 'hindi';
         let filteredList = festivals.filter(item => item.language === currentLang);
         
-        // यहाँ आपके ऐप का असली रेंडर फंक्शन इस्तेमाल होगा
-        renderPhotosBatch(filteredList); 
+        // क्लाउडब्रेसोर्सेज में फेस्टिवल का डेटा सेट करें ताकि renderPhotosBatch उसे चला सके
+        cloudResources = filteredList.map(item => ({
+            public_id: item.id,
+            format: '',
+            customUrl: item.url,
+            fullUrl: item.url,
+            uniqueId: item.id
+        }));
+        
+        loadIndex = 0;
+        if (galleryContainer) galleryContainer.innerHTML = '';
+        
+        if (cloudResources.length > 0) {
+            renderPhotosBatch();
+        } else {
+            if (galleryContainer) galleryContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:30px; grid-column: span 4;'>कोई फेस्टिवल फोटो नहीं मिली!</p>";
+        }
     } catch (err) {
         console.log("Festival load error:", err);
     }
