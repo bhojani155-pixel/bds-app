@@ -29,17 +29,15 @@ async function loadFestivalStatuses() {
         let response = await fetch('festivals.json');
         let festivals = await response.json();
         
-        // यूज़र ने जो भाषा चुनी है (हिंदी या गुजराती), उसके हिसाब से फोटो दिखाएं
         let currentLang = localStorage.getItem('user_lang') || 'hindi';
         let filteredList = festivals.filter(item => item.language === currentLang);
         
-        // यह आपके ऐप के उस फंक्शन को कॉल करेगा जो फोटो को स्क्रीन पर दिखाता है और शेयर/डाउनलोड बटन बनाता है
-        displayStatusesOnScreen(filteredList);
+        // यहाँ आपके ऐप का असली रेंडर फंक्शन इस्तेमाल होगा
+        renderPhotosBatch(filteredList); 
     } catch (err) {
         console.log("Festival load error:", err);
     }
 }
-
 // ==========================================
 // 🔔 2. OneSignal Init + Automatic Tag Setup
 // ==========================================
