@@ -14,6 +14,31 @@ function getAppLanguage() {
 }
 window.getAppLanguage = getAppLanguage;
 
+// पेज लोड होते ही चेक करेगा कि URL में कोई ID है क्या?
+window.addEventListener('load', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const myParam = urlParams.get('id'); // जैसे: https://bds-app-olive.vercel.app/?id=ganpati-1
+
+    if (myParam) {
+        // यहाँ वो फंक्शन चलाएं जो आपकी ऐप में उस ID वाला स्टेटस ढूंढ कर उसे खोल दे
+        openStatusById(myParam); 
+    }
+});
+async function loadFestivalStatuses() {
+    try {
+        let response = await fetch('festivals.json');
+        let festivals = await response.json();
+        
+        // यूज़र ने जो भाषा चुनी है (हिंदी या गुजराती), उसके हिसाब से फोटो दिखाएं
+        let currentLang = localStorage.getItem('user_lang') || 'hindi';
+        let filteredList = festivals.filter(item => item.language === currentLang);
+        
+        // यह आपके ऐप के उस फंक्शन को कॉल करेगा जो फोटो को स्क्रीन पर दिखाता है और शेयर/डाउनलोड बटन बनाता है
+        displayStatusesOnScreen(filteredList);
+    } catch (err) {
+        console.log("Festival load error:", err);
+    }
+}
 
 // ==========================================
 // 🔔 2. OneSignal Init + Automatic Tag Setup
