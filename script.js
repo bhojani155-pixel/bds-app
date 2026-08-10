@@ -406,6 +406,7 @@ window.shareMediaContent = shareMediaContent;
 
 
 // ==========================================
+// ==========================================
 // 🚀 6. मुख्य ऐप लॉजिक (DOM CONTENT LOADED)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -462,6 +463,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const textsPerLoad = 25;
     const photoItemsPerLoad = 25;
     let currentLightboxIndex = 0;
+
+    // 🌸 फेस्टिवल स्टेटस लोड करने वाला फंक्शन (अब galleryContainer इसके दायरे में है)
+    async function loadFestivalStatuses() {
+        try {
+            let response = await fetch('festivals.json');
+            let festivals = await response.json();
+            
+            let currentLang = localStorage.getItem("user_app_lang") || 'hindi';
+            let filteredList = festivals.filter(item => item.language === currentLang);
+            
+            cloudResources = filteredList.map(item => ({
+                public_id: item.id,
+                format: '',
+                customUrl: item.url,
+                fullUrl: item.url,
+                uniqueId: item.id
+            }));
+            
+            loadIndex = 0;
+            if (galleryContainer) galleryContainer.innerHTML = '';
+            
+            if (cloudResources.length > 0) {
+                renderPhotosBatch();
+            } else {
+                if (galleryContainer) galleryContainer.innerHTML = "<p style='color:#aaa; text-align:center; padding:30px; grid-column: span 4;'>कोई फेस्टिवल फोटो नहीं मिली!</p>";
+            }
+        } catch (err) {
+            console.log("Festival load error:", err);
+        }
+    }
+    window.loadFestivalStatuses = loadFestivalStatuses;
 
     const avatarInputEl = document.getElementById('avatarInput');
     if (avatarInputEl) {
@@ -1074,32 +1106,41 @@ modal.querySelector("#lb-next-btn").onclick = (e) => { e.stopPropagation(); chan
         card.appendChild(p); card.appendChild(actionDiv); txtContainer.appendChild(card);
     }
 
-    function refreshContent() {
-        removeSentinel();
-        closeCustomLightbox();
-        if (galleryContainer) galleryContainer.innerHTML = "";
-        if (reelsContainer) reelsContainer.innerHTML = "";
-        if (txtContainer) txtContainer.innerHTML = "";
-        if (reelsContainer) reelsContainer.className = "reels-container video-grid-layout";
+   function refreshContent() {
+    removeSentinel();
+    closeCustomLightbox();
+    if (galleryContainer) galleryContainer.innerHTML = "";
+    if (reelsContainer) reelsContainer.innerHTML = "";
+    if (txtContainer) txtContainer.innerHTML = "";
+    if (reelsContainer) reelsContainer.className = "reels-container video-grid-layout";
 
-        if (currentTab === "photos") loadPhotosFromCloudinary(currentCategory);
-        else if (currentTab === "videos") loadVideosFromCloudinary(currentCategory);
-        else if (currentTab === "text") loadTextStatus(currentCategory);
+    // यहाँ चेक जोड़ दें कि अगर कैटेगरी festival है, तो हमारा नया फंक्शन चले
+    if (currentTab === "photos") {
+        if (currentCategory === "festival") {
+            loadFestivalStatuses();
+        } else {
+            loadPhotosFromCloudinary(currentCategory);
+        }
     }
-
-    document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const btnId = e.currentTarget.id.toLowerCase();
-            if (btnId.includes("bhakti")) currentCategory = "bhakti";
-            else if (btnId.includes("sad")) currentCategory = "sad";
-            else if (btnId.includes("motivation")) currentCategory = "motivation";
-            else if (btnId.includes("fav")) currentCategory = "favorites";
-            else if (btnId.includes("love")) currentCategory = "love";
-            else currentCategory = e.currentTarget.getAttribute("data-cat") || "bhakti";
-            refreshContent();
-        });
+    else if (currentTab === "videos") loadVideosFromCloudinary(currentCategory);
+    else if (currentTab === "text") loadTextStatus(currentCategory);
+}
+document.querySelectorAll(".btn-category, .category-buttons button").forEach(btn => {
+    btn.addEventListener("click", e => {
+        const btnId = e.currentTarget.id.toLowerCase();
+        
+        // यहाँ festival का चेक जोड़ दें
+        if (btnId.includes("festival")) currentCategory = "festival";
+        else if (btnId.includes("bhakti")) currentCategory = "bhakti";
+        else if (btnId.includes("sad")) currentCategory = "sad";
+        else if (btnId.includes("motivation")) currentCategory = "motivation";
+        else if (btnId.includes("fav")) currentCategory = "favorites";
+        else if (btnId.includes("love")) currentCategory = "love";
+        else currentCategory = e.currentTarget.getAttribute("data-cat") || "bhakti";
+        
+        refreshContent();
     });
-
+});
     const topHeaderShareBtn = document.getElementById("appShareBtn") || document.getElementById("app-share-btn");
     if (topHeaderShareBtn) {
         topHeaderShareBtn.onclick = (e) => {
